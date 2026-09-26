@@ -576,6 +576,23 @@ namespace Typedown.WinUI
             return true;
         }
 
+        private async Task EnsurePortableWebView2Async()
+        {
+            try
+            {
+                var options = new CoreWebView2EnvironmentOptions { AdditionalBrowserArguments = string.Join(" ", Config.WebView2Args) };
+                var environment = await CoreWebView2Environment.CreateWithOptionsAsync(
+                    "", Path.Combine(Config.GetLocalFolderPath(), "WebView2"), options);
+                await EditorView.EnsureCoreWebView2Async(environment);
+            }
+            catch (Exception ex)
+            {
+                // Better a profile next to Caret.exe than no editor at all.
+                Log($"WebView2: couldn't use the Data folder ({ex.Message}); using the default location");
+                await EditorView.EnsureCoreWebView2Async();
+            }
+        }
+
         private void Log(string message) => File.AppendAllText(logPath, $"{DateTime.Now:O} {message}\n");
 
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -642,11 +659,14 @@ namespace Typedown.WinUI
                 // docs in this WinUI3+projection combination, the well-documented environment-variable
                 // configuration path sidesteps the ambiguity entirely and needs no API call at all.
                 Environment.SetEnvironmentVariable("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS", string.Join(" ", Config.WebView2Args));
-                // Portable build: WebView2's profile would otherwise go next to Caret.exe, which fails
-                // outright when that folder is read-only. Keep it with the rest of Caret's data.
+                // Portable build: WebView2's profile would otherwise go to "Caret.exe.WebView2" next to
+                // Caret.exe, which fails outright when that folder is read-only. Keep it with the rest
+                // of Caret's data. The WinUI control ignores WEBVIEW2_USER_DATA_FOLDER (checked on the
+                // CI smoke test), so the environment is created here with the folder passed explicitly.
                 if (!Config.IsPackaged)
-                    Environment.SetEnvironmentVariable("WEBVIEW2_USER_DATA_FOLDER", Path.Combine(Config.GetLocalFolderPath(), "WebView2"));
-                await EditorView.EnsureCoreWebView2Async();
+                    await EnsurePortableWebView2Async();
+                else
+                    await EditorView.EnsureCoreWebView2Async();
                 Log("CoreWebView2 initialized OK");
                 Log($"Data folder: {Config.GetLocalFolderPath()}; WebView2 profile: {EditorView.CoreWebView2.Environment.UserDataFolder}");
                 var staticsPath = Path.Combine(AppContext.BaseDirectory, "Resources", "Statics");
