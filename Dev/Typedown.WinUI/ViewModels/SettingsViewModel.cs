@@ -87,7 +87,9 @@ namespace Typedown.WinUI.ViewModels
         // New since the fork: the Convert to Markdown page (MainWindow.Convert.cs). Empty folder = save
         // next to the original files.
         public string ConvertOutputFolder { get => GetSettingValue(""); set => SetSettingValue(value); }
-        public bool ConvertExtractImages { get => GetSettingValue(true); set => SetSettingValue(value); }
+        // Portable build: the python.exe the user chose for MarkItDown. Empty = find one automatically
+        // (Services/MarkItDown/PythonLocator.cs).
+        public string PythonPath { get => GetSettingValue(""); set => SetSettingValue(value); }
         public InsertImageAction InsertClipboardImageAction { get => GetSettingValue(InsertImageAction.None); set => SetSettingValue(value); }
         public string InsertClipboardImageCopyPath { get => GetSettingValue("./images"); set => SetSettingValue(value); }
         public int? InsertClipboardImageUseUploadConfigId { get => GetSettingValue<int?>(null); set => SetSettingValue(value); }

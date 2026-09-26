@@ -10,7 +10,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Typedown.WinUI.Models;
 using Typedown.WinUI.Services;
-using Typedown.WinUI.Services.Conversion;
+using Typedown.WinUI.Services.MarkItDown;
 using Typedown.WinUI.Utilities;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
@@ -19,10 +19,10 @@ using WinRT.Interop;
 
 namespace Typedown.WinUI
 {
-    // New since the fork: the Convert to Markdown page. Word, Excel, PowerPoint, PDF and CSV files —
-    // picked, dropped, or a whole folder — are converted in-process (Services/Conversion) and written
-    // as .md files, each with its size and an estimate of how many AI tokens it takes. Nothing is ever
-    // overwritten: an existing "report.md" makes the new one "report (2).md".
+    // The Convert to Markdown page. Files are picked, dropped, or found in a whole folder (and its
+    // subfolders), converted by Microsoft MarkItDown in the user's own Python (MainWindow.MarkItDown.cs),
+    // and written as .md files, each with its size and an estimate of how many AI tokens it takes.
+    // Nothing is ever overwritten: an existing "report.md" makes the new one "report (2).md".
     public sealed partial class MainWindow
     {
         private readonly ObservableCollection<ConversionItem> conversions = new();
@@ -30,7 +30,8 @@ namespace Typedown.WinUI
         private bool convertOptionsUpdating;
         private bool converting;
 
-        private static readonly string[] LegacyOfficeExtensions = { ".doc", ".xls", ".ppt", ".dot", ".xlt", ".pot" };
+        // Big PDFs take a while; a file that takes longer than this is given up on.
+        private const int ConvertFileTimeoutMs = 300_000;
 
         private void SetConvertPageVisible(bool visible)
         {
@@ -43,9 +44,9 @@ namespace Typedown.WinUI
             convertPageReady = true;
             ConvertResultsList.ItemsSource = conversions;
             convertOptionsUpdating = true;
-            ConvertImagesToggle.IsOn = settings.ConvertExtractImages;
             UpdateConvertOutputChoice();
             convertOptionsUpdating = false;
+            _ = RefreshPythonStatusAsync();
         }
 
         // Opening a note (from the page's Open button, the folder tree, Recent…) returns to the editor.
@@ -98,18 +99,13 @@ namespace Typedown.WinUI
             convertOptionsUpdating = false;
         }
 
-        private void ConvertImagesToggle_Toggled(object sender, RoutedEventArgs e)
-        {
-            if (!convertOptionsUpdating) settings.ConvertExtractImages = ConvertImagesToggle.IsOn;
-        }
-
         // --- Input ---
 
         private async void ConvertChooseFiles_Click(object sender, RoutedEventArgs e)
         {
             var picker = new FileOpenPicker();
             InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
-            foreach (var ext in DocumentConverter.SupportedExtensions.Concat(LegacyOfficeExtensions)) picker.FileTypeFilter.Add(ext);
+            foreach (var ext in MarkItDownFormats.Extensions.Concat(MarkItDownFormats.LegacyOfficeExtensions)) picker.FileTypeFilter.Add(ext);
             var files = await picker.PickMultipleFilesAsync();
             if (files?.Count > 0) await ConvertPathsAsync(files.Select(f => f.Path));
         }
@@ -151,7 +147,8 @@ namespace Typedown.WinUI
                     try
                     {
                         found = Directory.EnumerateFiles(input, "*", new EnumerationOptions { RecurseSubdirectories = true, IgnoreInaccessible = true })
-                            .Where(f => DocumentConverter.IsSupported(f) || LegacyOfficeExtensions.Contains(Path.GetExtension(f).ToLowerInvariant()))
+                            .Where(f => MarkItDownFormats.IsSupported(f) || MarkItDownFormats.IsLegacyOffice(f))
+                            // Office lock files ("~$report.docx").
                             .Where(f => !Path.GetFileName(f).StartsWith("~$"))
                             .OrderBy(f => f, StringComparer.OrdinalIgnoreCase).ToList();
                     }
@@ -187,30 +184,43 @@ namespace Typedown.WinUI
             // One batch at a time; later drops queue behind it.
             while (converting) await Task.Delay(200);
             converting = true;
+            MarkItDownWorker worker = null;
             try
             {
+                var python = await EnsureMarkItDownAsync();
+                if (python == null)
+                {
+                    foreach (var (item, _) in items) Fail(item, Locale.GetString("ConvertMarkItDownNotReady"));
+                    return;
+                }
                 foreach (var (item, root) in items)
                 {
-                    await ConvertOneAsync(item, root);
+                    worker = await ConvertOneAsync(item, root, python, worker);
                     UpdateConvertSummary();
                 }
             }
-            finally { converting = false; }
+            finally
+            {
+                worker?.Dispose();
+                converting = false;
+                UpdateConvertSummary();
+            }
         }
 
-        private async Task ConvertOneAsync(ConversionItem item, string root)
+        // Returns the worker to use for the next file: the same one, a restarted one after a crash or
+        // timeout, or null if it couldn't be started.
+        private async Task<MarkItDownWorker> ConvertOneAsync(ConversionItem item, string root, PythonInfo python, MarkItDownWorker worker)
         {
             var source = item.SourcePath;
-            var extension = Path.GetExtension(source).ToLowerInvariant();
-            if (LegacyOfficeExtensions.Contains(extension))
+            if (MarkItDownFormats.IsLegacyOffice(source))
             {
                 Fail(item, Locale.GetString("ConvertLegacyFormat"));
-                return;
+                return worker;
             }
-            if (!DocumentConverter.IsSupported(source))
+            if (!MarkItDownFormats.IsSupported(source))
             {
                 Fail(item, Locale.GetString("ConvertUnsupported"));
-                return;
+                return worker;
             }
 
             item.IsConverting = true;
@@ -218,45 +228,54 @@ namespace Typedown.WinUI
             try
             {
                 item.SourceBytes = new FileInfo(source).Length;
-                var outputPath = OutputPathFor(source, root);
-                var baseName = Path.GetFileNameWithoutExtension(outputPath);
-                var options = new ConversionOptions
+                if (worker == null || !worker.IsAlive)
                 {
-                    SlideHeadingFormat = Locale.GetString("ConvertSlideHeading"),
-                    SlideHeadingUntitledFormat = Locale.GetString("ConvertSlideHeadingUntitled"),
-                    NotesLabel = Locale.GetString("ConvertNotesLabel"),
-                };
-                if (settings.ConvertExtractImages)
-                {
-                    options.ImageDirectory = Path.Combine(Path.GetDirectoryName(outputPath), baseName + "_images");
-                    options.ImageLinkPrefix = baseName + "_images";
+                    worker?.Dispose();
+                    worker = await MarkItDownWorker.StartAsync(python.Executable);
+                    Log($"Convert: MarkItDown {worker.Version} started in {python.Executable}");
                 }
-                var result = await DocumentConverter.ConvertAsync(source, options);
+                var result = await worker.ConvertAsync(source, ConvertFileTimeoutMs);
+                if (!result.Ok)
+                {
+                    Log($"Convert: MarkItDown failed {source}: {result.ErrorKind}: {result.Error}");
+                    Fail(item, FriendlyMarkItDownError(result.ErrorKind, result.Error));
+                    return worker;
+                }
+                var markdown = result.Markdown.Trim() + "\n";
                 if (string.IsNullOrWhiteSpace(result.Markdown))
                 {
-                    Fail(item, result.Warnings.Contains(ConversionWarning.PdfHasNoText)
+                    Fail(item, Path.GetExtension(source).Equals(".pdf", StringComparison.OrdinalIgnoreCase)
                         ? Locale.GetString("ConvertPdfNoText")
                         : Locale.GetString("ConvertNoContent"));
-                    return;
+                    return worker;
                 }
+                var outputPath = OutputPathFor(source, root);
                 Directory.CreateDirectory(Path.GetDirectoryName(outputPath));
-                await File.WriteAllTextAsync(outputPath, result.Markdown, new UTF8Encoding(false));
+                await File.WriteAllTextAsync(outputPath, markdown, new UTF8Encoding(false));
 
                 item.OutputPath = outputPath;
-                item.Markdown = result.Markdown;
-                item.MarkdownBytes = Encoding.UTF8.GetByteCount(result.Markdown);
-                item.Tokens = DocumentConverter.EstimateTokens(result.Markdown);
+                item.Markdown = markdown;
+                item.MarkdownBytes = Encoding.UTF8.GetByteCount(markdown);
+                item.Tokens = MarkItDownFormats.EstimateTokens(markdown);
                 item.Succeeded = true;
                 var detail = Locale.Format("ConvertResultDetail", FormatSize(item.SourceBytes), FormatSize(item.MarkdownBytes), item.Tokens.ToString("N0"));
                 // Rounded down: 99.6% must not read "100% smaller".
-                var saved = Math.Floor(100.0 * (item.SourceBytes - item.MarkdownBytes) / item.SourceBytes);
+                var saved = item.SourceBytes > 0 ? Math.Floor(100.0 * (item.SourceBytes - item.MarkdownBytes) / item.SourceBytes) : 0;
                 if (saved >= 1)
                     detail += " · " + Locale.Format("ConvertSmaller", saved);
-                if (result.Warnings.Contains(ConversionWarning.SkippedUnsupportedImages))
-                    detail += " · " + Locale.GetString("ConvertSkippedImages");
                 item.Detail = detail;
                 item.ActionsVisibility = Visibility.Visible;
                 Log($"Convert: {source} -> {outputPath} ({item.SourceBytes} -> {item.MarkdownBytes} bytes, ~{item.Tokens} tokens)");
+            }
+            catch (TimeoutException)
+            {
+                Log($"Convert: timed out {source}");
+                Fail(item, Locale.GetString("MarkItDownTimedOut"));
+            }
+            catch (MarkItDownStartException ex)
+            {
+                Log($"Convert: MarkItDown stopped on {source}: {ex.Message}");
+                Fail(item, Locale.Format("ConvertFailed", LastLine(ex.Message)));
             }
             catch (Exception ex)
             {
@@ -267,6 +286,7 @@ namespace Typedown.WinUI
             {
                 item.IsConverting = false;
             }
+            return worker;
         }
 
         private static void Fail(ConversionItem item, string message)
@@ -281,11 +301,28 @@ namespace Typedown.WinUI
             UnauthorizedAccessException => Locale.GetString("ConvertNoWriteAccess"),
             FileNotFoundException or DirectoryNotFoundException => Locale.GetString("ConvertFileMissing"),
             IOException io when io.HResult == unchecked((int)0x80070020) => Locale.GetString("ConvertFileLocked"),
-            DocumentFormat.OpenXml.Packaging.OpenXmlPackageException or System.IO.InvalidDataException or FileFormatException
-                => Locale.GetString("ConvertDamagedOrProtected"),
-            _ when ex.GetType().FullName?.StartsWith("UglyToad.PdfPig") == true => Locale.GetString("ConvertDamagedOrProtected"),
             _ => Locale.Format("ConvertFailed", ex.Message),
         };
+
+        // MarkItDown reports the Python exception's type name and message.
+        private static string FriendlyMarkItDownError(string kind, string error)
+        {
+            error ??= "";
+            if (kind == "MissingDependencyException" || error.Contains("have not been installed", StringComparison.OrdinalIgnoreCase))
+                return Locale.GetString("ConvertMissingDependency");
+            return kind switch
+            {
+                "UnsupportedFormatException" => Locale.GetString("ConvertUnsupported"),
+                "FileNotFoundError" => Locale.GetString("ConvertFileMissing"),
+                "PermissionError" => Locale.GetString("ConvertFileLocked"),
+                "BadZipFile" or "PackageNotFoundError" or "PdfReadError" or "PDFSyntaxError" => Locale.GetString("ConvertDamagedOrProtected"),
+                _ => Locale.Format("ConvertFailed", LastLine(error)),
+            };
+        }
+
+        // A Python traceback's useful part is its last line.
+        private static string LastLine(string text) =>
+            (text ?? "").Replace("\r", "").Split('\n', StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?.Trim() ?? "";
 
         // Next to the original, or in the chosen folder (mirroring subfolders of a dropped folder).
         // Never overwrites: "report.md" → "report (2).md".
@@ -300,7 +337,7 @@ namespace Typedown.WinUI
             }
             else directory = Path.GetDirectoryName(source);
             var name = Path.GetFileNameWithoutExtension(source);
-            bool Taken(string candidate) => File.Exists(candidate) || Directory.Exists(Path.Combine(directory, Path.GetFileNameWithoutExtension(candidate) + "_images"));
+            bool Taken(string candidate) => File.Exists(candidate);
             var path = Path.Combine(directory, name + ".md");
             if (!Taken(path)) return path;
             // "report.docx" and "report.pdf" side by side → "report.md" and "report (PDF).md".

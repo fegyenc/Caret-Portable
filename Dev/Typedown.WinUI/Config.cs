@@ -45,7 +45,17 @@ namespace Typedown.WinUI
             MaxDepth = 256
         };
 
-        public static string GetLocalFolderPath()
+        // Where settings, recent files, favorites, templates, crash-recovery backups and WebView2's
+        // cache live. The installed (MSIX) app uses its package folder. The portable build keeps
+        // everything in a "Data" folder next to Caret.exe, so the whole app is one folder that can be
+        // copied, moved or deleted, and nothing is left in the user profile. When that folder can't be
+        // written (a read-only network share, Program Files), it falls back to
+        // %LOCALAPPDATA%\Caret Portable.
+        public static string GetLocalFolderPath() => localFolderPath ??= FindLocalFolderPath();
+
+        private static string localFolderPath;
+
+        private static string FindLocalFolderPath()
         {
             try
             {
@@ -53,10 +63,27 @@ namespace Typedown.WinUI
             }
             catch (Exception)
             {
-                var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), AppName);
-                if (!Directory.Exists(path))
-                    Directory.CreateDirectory(path);
-                return path;
+            }
+            var portable = Path.Combine(AppContext.BaseDirectory, "Data");
+            if (IsWritableFolder(portable)) return portable;
+            var fallback = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), AppName + " Portable");
+            Directory.CreateDirectory(fallback);
+            return fallback;
+        }
+
+        private static bool IsWritableFolder(string path)
+        {
+            try
+            {
+                Directory.CreateDirectory(path);
+                var probe = Path.Combine(path, $".write-test-{Environment.ProcessId}");
+                File.WriteAllText(probe, "");
+                File.Delete(probe);
+                return true;
+            }
+            catch
+            {
+                return false;
             }
         }
 
@@ -124,7 +151,7 @@ namespace Typedown.WinUI
             {
                 var v = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
                 AppVersionNumber = v;
-                AppVersion = $"{v.Major}.{v.Minor}.{v.Build}.{v.Revision} (Unpackaged)";
+                AppVersion = $"{v.Major}.{v.Minor}.{v.Build}.{v.Revision} (Portable)";
             }
         }
     }

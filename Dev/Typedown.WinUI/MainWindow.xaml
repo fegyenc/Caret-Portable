@@ -717,21 +717,34 @@
                         </Grid>
 
                         <!-- Options -->
-                        <Grid ColumnSpacing="24" RowSpacing="8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Spacing="4">
-                                <TextBlock Text="{u:Loc Key=ConvertSaveTo}"/>
-                                <ComboBox x:Name="ConvertOutputComboBox" HorizontalAlignment="Stretch" SelectionChanged="ConvertOutputComboBox_SelectionChanged">
-                                    <ComboBoxItem Content="{u:Loc Key=ConvertSaveNextTo}" Tag="next"/>
-                                    <ComboBoxItem x:Name="ConvertOutputFolderItem" Content="{u:Loc Key=ConvertSaveToFolder}" Tag="folder"/>
-                                </ComboBox>
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="{u:Loc Key=ConvertSaveTo}"/>
+                            <ComboBox x:Name="ConvertOutputComboBox" HorizontalAlignment="Stretch" SelectionChanged="ConvertOutputComboBox_SelectionChanged">
+                                <ComboBoxItem Content="{u:Loc Key=ConvertSaveNextTo}" Tag="next"/>
+                                <ComboBoxItem x:Name="ConvertOutputFolderItem" Content="{u:Loc Key=ConvertSaveToFolder}" Tag="folder"/>
+                            </ComboBox>
+                        </StackPanel>
+
+                        <!-- Converter: MarkItDown in the user's own Python (MainWindow.MarkItDown.cs) -->
+                        <Border CornerRadius="8" Padding="16,12"
+                                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                            <StackPanel Spacing="8">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="{u:Loc Key=EngineTitle}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                    <ProgressRing x:Name="ConvertEngineProgress" IsActive="False" Width="16" Height="16"/>
+                                </StackPanel>
+                                <TextBlock x:Name="ConvertEngineStatusText" TextWrapping="Wrap"/>
+                                <TextBlock x:Name="ConvertEngineDetailText" TextWrapping="Wrap" Opacity="0.7" FontSize="12" IsTextSelectionEnabled="True" Visibility="Collapsed"/>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Button x:Name="ConvertInstallMarkItDownButton" Content="{u:Loc Key=EngineInstallMarkItDown}" Click="ConvertInstallMarkItDown_Click"
+                                            Style="{StaticResource AccentButtonStyle}" Visibility="Collapsed"/>
+                                    <Button Content="{u:Loc Key=EngineChoosePython}" Click="ConvertChoosePython_Click"/>
+                                    <Button Content="{u:Loc Key=EngineDetectAgain}" Click="ConvertDetectPython_Click"/>
+                                    <HyperlinkButton x:Name="ConvertEngineAutomaticButton" Content="{u:Loc Key=EngineUseAutomatic}" Click="ConvertUseAutomaticPython_Click" Visibility="Collapsed"/>
+                                </StackPanel>
                             </StackPanel>
-                            <ToggleSwitch Grid.Column="1" x:Name="ConvertImagesToggle" Header="{u:Loc Key=ConvertExtractImages}"
-                                          OnContent="{u:Loc Key=ToggleOn}" OffContent="{u:Loc Key=ToggleOff}" Toggled="ConvertImagesToggle_Toggled"/>
-                        </Grid>
+                        </Border>
 
                         <!-- Summary of this session's conversions -->
                         <Border x:Name="ConvertSummaryPanel" Visibility="Collapsed" CornerRadius="8" Padding="16,12"

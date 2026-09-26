@@ -1,3 +1,16 @@
+# Caret Portable vs. Caret
+
+Caret Portable was split off from [Caret](https://github.com/fegyenc/Caret) (commit `91f059c`) for PCs where applications can't be installed. What changed:
+
+- **Unpackaged only.** No MSIX, Store identity or signing certificate. `Release` publishes a self-contained folder (the .NET runtime and Windows App SDK included) with `Caret.exe`. `Package.appxmanifest`, `PACKAGING.md`, `docs/store` and the MSIX deployment guides were removed.
+- **Microsoft MarkItDown does every conversion.** The built-in .NET converters (`Services/Conversion`, Open XML SDK and PdfPig) were removed. `Services/MarkItDown` finds the user's Python without relying on PATH (`PythonLocator`) and runs MarkItDown in one worker process per batch (`MarkItDownWorker`, a JSON-lines protocol over stdin/stdout). The Convert page has a Converter panel that shows what was found and offers *Choose python.exe…*, *Detect again* and *Install MarkItDown*. The choice is stored as the `PythonPath` setting.
+- **More formats**: .xls, Outlook .msg, HTML, EPUB, .ipynb, JSON, XML, RSS, TXT and ZIP, alongside Word, Excel, PowerPoint, PDF and CSV. The *Extract images* option went away, because MarkItDown doesn't write image files.
+- **No PATH or registry changes.** The old MarkItDown installer added pip's Scripts folder to the user PATH. Now MarkItDown is always started as `python -c …` with the full path to python.exe, and installing it is just `pip install --user` into that Python.
+- **Data next to the exe.** Settings, recent files, favorites, templates, backups and the WebView2 profile go to `Data\` beside `Caret.exe`. If that folder isn't writable, they go to `%LOCALAPPDATA%\Caret Portable`.
+- **No update check.** The settings panel for it is hidden; updating means replacing the folder.
+- **Separate single-instance key**, so the portable app doesn't hand its launch over to an installed Caret.
+- **CI**: `.github/workflows/portable.yml` builds x64 and ARM64 zips on `windows-latest`, starts the x64 build from a fresh folder to check that the editor loads, and attaches the zips to a release when a `v*` tag is pushed.
+
 # Caret vs. Typedown: what changed
 
 Caret is a fork of [Typedown](https://github.com/byxiaozhi/Typedown), ported from WPF + XAML Islands on .NET Core 3.1 to native **WinUI 3 + WebView2** on **.NET 8** (`Dev/Typedown.WinUI`). The Markdown editor itself (`Dev/Typedown.Editor`, React/TypeScript) carried over as-is at first and has since picked up Caret-specific changes (split preview, image paths, formatting fixes), noted below. This document is mostly about the native host around it. The original WPF host (`Dev/Typedown`, `Dev/Typedown.Core`), its tests and tools were removed from this repo once the port was complete. Paths like `Typedown.Core\…` below and in source comments refer to the [upstream Typedown](https://github.com/byxiaozhi/Typedown) code.

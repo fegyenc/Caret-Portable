@@ -1,0 +1,110 @@
+name: Portable build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build (${{ matrix.platform }})
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [x64, ARM64]
+    env:
+      PUBLISH_DIR: ${{ github.workspace }}\out\Caret-Portable
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build the editor bundle
+        working-directory: Dev/Typedown.Editor
+        # react-scripts turns every lint warning into an error when CI=true.
+        env:
+          CI: 'false'
+        run: |
+          npm install --global yarn
+          yarn install --frozen-lockfile --network-timeout 600000
+          yarn build
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - uses: microsoft/setup-msbuild@v2
+
+      - name: Publish the portable app
+        run: >
+          msbuild Dev\Typedown.WinUI\Typedown.WinUI.csproj -restore -t:Publish -m
+          -p:Configuration=Release -p:Platform=${{ matrix.platform }}
+          -p:PublishDir="${{ env.PUBLISH_DIR }}"
+
+      - name: Add the read-me
+        shell: pwsh
+        run: |
+          Copy-Item PORTABLE.md "$env:PUBLISH_DIR\README.md"
+          if (-not (Test-Path "$env:PUBLISH_DIR\Caret.exe")) { throw "Caret.exe is missing from the publish folder" }
+          if (-not (Test-Path "$env:PUBLISH_DIR\Resources\Statics\index.html")) { throw "The editor bundle is missing from the publish folder" }
+          if (-not (Test-Path "$env:PUBLISH_DIR\Strings\en\AppResources.resw")) { throw "The UI strings are missing from the publish folder" }
+          $size = (Get-ChildItem $env:PUBLISH_DIR -Recurse | Measure-Object Length -Sum).Sum / 1MB
+          "Publish folder: {0:N0} MB, {1} files" -f $size, (Get-ChildItem $env:PUBLISH_DIR -Recurse -File).Count
+
+      # Starts the app the way a user would (double-click, no install) and checks that it gets as far as
+      # loading the editor, from a copy in a fresh folder so nothing from the build output helps it.
+      - name: Smoke test
+        if: matrix.platform == 'x64'
+        shell: pwsh
+        run: |
+          $dir = Join-Path $env:RUNNER_TEMP 'smoke\Caret-Portable'
+          Copy-Item $env:PUBLISH_DIR $dir -Recurse
+          $log = Join-Path $env:TEMP 'caret_winui_probe.log'
+          Remove-Item $log -ErrorAction SilentlyContinue
+          $p = Start-Process (Join-Path $dir 'Caret.exe') -PassThru
+          $ok = $false
+          for ($i = 0; $i -lt 60 -and -not $p.HasExited; $i++) {
+            Start-Sleep -Seconds 1
+            if ((Test-Path $log) -and (Select-String -Path $log -Pattern 'CoreWebView2 initialized OK' -Quiet)) { $ok = $true; break }
+          }
+          if (Test-Path $log) { Get-Content $log | Select-Object -First 40 }
+          if ($p.HasExited) { throw "Caret exited on its own (exit code $($p.ExitCode))" }
+          Stop-Process -Id $p.Id -Force
+          if (-not $ok) { throw 'Caret started but the editor never finished loading' }
+          if (-not (Test-Path (Join-Path $dir 'Data\WebView2'))) { throw 'Caret did not keep its data in the Data folder next to Caret.exe' }
+          'Caret started from a plain folder and loaded the editor.'
+
+      - name: Zip
+        shell: pwsh
+        run: Compress-Archive -Path "$env:PUBLISH_DIR" -DestinationPath "out\Caret-Portable-${{ matrix.platform }}.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Caret-Portable-${{ matrix.platform }}
+          path: out/Caret-Portable-${{ matrix.platform }}.zip
+          if-no-files-found: error
+
+  release:
+    name: Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.zip
+          generate_release_notes: true

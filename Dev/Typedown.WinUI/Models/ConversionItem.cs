@@ -35,7 +35,8 @@ namespace Typedown.WinUI.Models
         public static (string Badge, Windows.UI.Color Color) BadgeFor(string extension) => extension?.ToLowerInvariant() switch
         {
             ".docx" or ".docm" or ".dotx" or ".doc" => ("DOCX", Windows.UI.Color.FromArgb(255, 0x2B, 0x57, 0x9A)),
-            ".xlsx" or ".xlsm" or ".xls" => ("XLSX", Windows.UI.Color.FromArgb(255, 0x21, 0x73, 0x46)),
+            ".xlsx" or ".xlsm" => ("XLSX", Windows.UI.Color.FromArgb(255, 0x21, 0x73, 0x46)),
+            ".xls" => ("XLS", Windows.UI.Color.FromArgb(255, 0x21, 0x73, 0x46)),
             ".csv" => ("CSV", Windows.UI.Color.FromArgb(255, 0x21, 0x73, 0x46)),
             ".pptx" or ".pptm" or ".ppt" => ("PPTX", Windows.UI.Color.FromArgb(255, 0xC4, 0x3E, 0x1C)),
             ".pdf" => ("PDF", Windows.UI.Color.FromArgb(255, 0xB3, 0x0B, 0x00)),

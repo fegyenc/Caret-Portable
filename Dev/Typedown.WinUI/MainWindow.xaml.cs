@@ -19,7 +19,6 @@ using Typedown.WinUI.Enums;
 using Typedown.WinUI.Interfaces;
 using Typedown.WinUI.Models;
 using Typedown.WinUI.Services;
-using Typedown.WinUI.Services.Conversion;
 using Typedown.WinUI.Utilities;
 using Typedown.WinUI.ViewModels;
 using Windows.ApplicationModel.DataTransfer;
@@ -643,6 +642,10 @@ namespace Typedown.WinUI
                 // docs in this WinUI3+projection combination, the well-documented environment-variable
                 // configuration path sidesteps the ambiguity entirely and needs no API call at all.
                 Environment.SetEnvironmentVariable("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS", string.Join(" ", Config.WebView2Args));
+                // Portable build: WebView2's profile would otherwise go next to Caret.exe, which fails
+                // outright when that folder is read-only. Keep it with the rest of Caret's data.
+                if (!Config.IsPackaged)
+                    Environment.SetEnvironmentVariable("WEBVIEW2_USER_DATA_FOLDER", Path.Combine(Config.GetLocalFolderPath(), "WebView2"));
                 await EditorView.EnsureCoreWebView2Async();
                 Log("CoreWebView2 initialized OK");
                 var staticsPath = Path.Combine(AppContext.BaseDirectory, "Resources", "Statics");
@@ -1399,298 +1402,6 @@ namespace Typedown.WinUI
             Log("Print: ShowPrintUI invoked");
         }
 
-        // --- MarkItDown import ---
-        // New since the fork, not in the original at all: shells out to Microsoft's own MarkItDown
-        // (https://github.com/microsoft/markitdown, a Python CLI) to convert Office documents, PDFs,
-        // images, audio and more into Markdown, opened as a new Caret document. Genuinely external —
-        // there's no .NET port of it and no Python runtime bundled with Caret, so this is a subprocess
-        // call against whatever `markitdown` the user has on PATH (pip install markitdown[all]), not a
-        // vendored dependency. If it's missing, the failure path explains how to install it rather than
-        // failing silently or crashing.
-        private static readonly string[] MarkItDownFileTypes =
-        {
-            ".pdf", ".docx", ".doc", ".pptx", ".ppt", ".xlsx", ".xls", ".html", ".htm",
-            ".csv", ".json", ".xml", ".txt", ".png", ".jpg", ".jpeg", ".gif", ".bmp",
-            ".mp3", ".wav", ".m4a", ".zip", ".epub",
-        };
-
-        private async void ImportMarkItDownMenuItem_Click(object sender, RoutedEventArgs e)
-        {
-            var picker = new FileOpenPicker();
-            InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
-            foreach (var ext in MarkItDownFileTypes) picker.FileTypeFilter.Add(ext);
-            var pickedFile = await picker.PickSingleFileAsync();
-            if (pickedFile == null) return;
-            if (!await ConfirmDiscardChangesIfNeeded()) return;
-
-            // Word, Excel, PowerPoint, PDF and CSV are converted by Caret itself (Services/Conversion) —
-            // no Python needed. MarkItDown below is only for the other formats it knows.
-            if (DocumentConverter.IsSupported(pickedFile.Path))
-            {
-                try
-                {
-                    var result = await DocumentConverter.ConvertAsync(pickedFile.Path, new ConversionOptions
-                    {
-                        SlideHeadingFormat = Locale.GetString("ConvertSlideHeading"),
-                        SlideHeadingUntitledFormat = Locale.GetString("ConvertSlideHeadingUntitled"),
-                        NotesLabel = Locale.GetString("ConvertNotesLabel"),
-                    });
-                    if (string.IsNullOrWhiteSpace(result.Markdown))
-                    {
-                        await ShowErrorDialog(Locale.GetString("ImportFailed"), Locale.GetString(result.Warnings.Contains(ConversionWarning.PdfHasNoText) ? "ConvertPdfNoText" : "ConvertNoContent"));
-                        return;
-                    }
-                    file.NewFile();
-                    file.ApplyRecoveredBackup(result.Markdown);
-                    UpdateTitle();
-                    Log($"Import: {pickedFile.Path} ({result.Markdown.Length} chars)");
-                }
-                catch (Exception ex)
-                {
-                    Log($"Import: failed {pickedFile.Path}: {ex}");
-                    await ShowErrorDialog(Locale.GetString("ImportFailed"), FriendlyConversionError(ex));
-                }
-                return;
-            }
-
-            ImportMarkItDownMenuItem.IsEnabled = false;
-            // UpdateTitle() sets both of these from file's actual state — setting them directly here is
-            // just a transient status message, restored via UpdateTitle() itself in the finally block.
-            TitleTextBlock.Text = Locale.GetString("ConvertingWithMarkItDown");
-            Title = TitleTextBlock.Text;
-            try
-            {
-                Log($"MarkItDown: converting {pickedFile.Path}");
-                var (ok, output, error) = await RunMarkItDown(pickedFile.Path);
-                if (error == MarkItDownNotFoundSentinel)
-                {
-                    if (!await InstallMarkItDownAsync()) return; // user declined, or install itself failed (dialog already shown)
-                    Log($"MarkItDown: retrying conversion for {pickedFile.Path} after install");
-                    TitleTextBlock.Text = Locale.GetString("ConvertingWithMarkItDown");
-                    Title = TitleTextBlock.Text;
-                    (ok, output, error) = await RunMarkItDown(pickedFile.Path);
-                    if (error == MarkItDownNotFoundSentinel)
-                    {
-                        await ShowErrorDialog(Locale.GetString("MarkItDownStillNotFound"), Locale.GetString("MarkItDownStillNotFoundDetail"));
-                        return;
-                    }
-                }
-                if (!ok || string.IsNullOrWhiteSpace(output))
-                {
-                    await ShowErrorDialog(Locale.GetString("MarkItDownConversionFailed"),
-                        string.IsNullOrWhiteSpace(error) ? Locale.GetString("MarkItDownNoOutput") : error);
-                    Log($"MarkItDown: conversion failed for {pickedFile.Path}: {error}");
-                    return;
-                }
-                file.NewFile();
-                file.ApplyRecoveredBackup(output);
-                UpdateTitle();
-                Log($"MarkItDown: imported {pickedFile.Path} ({output.Length} chars)");
-            }
-            finally
-            {
-                UpdateTitle();
-                ImportMarkItDownMenuItem.IsEnabled = true;
-            }
-        }
-
-        private const string MarkItDownNotFoundSentinel = "__markitdown_not_found__";
-
-        // Some conversions (audio transcription in particular) genuinely take a while — 2 minutes
-        // before giving up and killing it, rather than either blocking forever or timing out too
-        // eagerly on a large PDF.
-        private static async Task<(bool ok, string output, string error)> RunMarkItDown(string sourcePath)
-        {
-            var (exitCode, stdout, stderr, timedOut) = await RunProcessAsync("markitdown", new[] { sourcePath }, 120_000);
-            if (timedOut) return (false, null, Locale.GetString("MarkItDownTimedOut"));
-            if (exitCode == null) return (false, null, MarkItDownNotFoundSentinel);
-            return (exitCode == 0, stdout, stderr);
-        }
-
-        // --- MarkItDown self-install ---
-        // The failure mode this exists for: "MarkItDown not found" used to just print a terminal
-        // command and leave the user to run it themselves — fine for a developer, a dead end for
-        // anyone who isn't comfortable with pip and PATH. This drives the whole thing from inside
-        // Caret instead: find a Python, run `pip install --user markitdown[all]`, then work out where
-        // pip put the executable and add it to PATH — both for this already-running process (so the
-        // very next conversion attempt, moments later, just works) and persisted to the user's
-        // environment (so new terminals and future launches of Caret find it too, without needing a
-        // restart). Returns true only if markitdown is ready to use by the time it returns.
-        private async Task<bool> InstallMarkItDownAsync()
-        {
-            // A Store install never downloads and runs code by itself (Store policy), and neither does
-            // one whose administrator switched it off: explain how to install MarkItDown instead. The
-            // formats most people need are built in anyway.
-            if (Config.IsStoreInstall || Config.PolicyDisablesMarkItDownInstall)
-            {
-                var manual = new ContentDialog
-                {
-                    XamlRoot = Content.XamlRoot,
-                    Title = Locale.GetString("MarkItDownNotFound"),
-                    Content = Locale.GetString("MarkItDownManualInstall"),
-                    PrimaryButtonText = Locale.GetString("LearnMore"),
-                    CloseButtonText = Locale.GetString("OK"),
-                    DefaultButton = ContentDialogButton.Close,
-                };
-                if (await manual.ShowAsync() == ContentDialogResult.Primary)
-                    await Launcher.LaunchUriAsync(new Uri("https://github.com/microsoft/markitdown"));
-                return false;
-            }
-
-            var confirm = new ContentDialog
-            {
-                XamlRoot = Content.XamlRoot,
-                Title = Locale.GetString("MarkItDownNotFound"),
-                Content = Locale.GetString("MarkItDownInstallPrompt"),
-                PrimaryButtonText = Locale.GetString("Install"),
-                CloseButtonText = Locale.GetString("NotNow"),
-                DefaultButton = ContentDialogButton.Primary,
-            };
-            if (await confirm.ShowAsync() != ContentDialogResult.Primary) return false;
-
-            var python = await FindPythonLauncherAsync();
-            if (python == null)
-            {
-                var noPython = new ContentDialog
-                {
-                    XamlRoot = Content.XamlRoot,
-                    Title = Locale.GetString("PythonNotFound"),
-                    Content = Locale.GetString("PythonNotFoundDetail"),
-                    PrimaryButtonText = Locale.GetString("OpenPythonOrg"),
-                    CloseButtonText = Locale.GetString("OK"),
-                    DefaultButton = ContentDialogButton.Primary,
-                };
-                if (await noPython.ShowAsync() == ContentDialogResult.Primary)
-                    await Launcher.LaunchUriAsync(new Uri("https://www.python.org/downloads/"));
-                return false;
-            }
-
-            ImportMarkItDownMenuItem.IsEnabled = false;
-            TitleTextBlock.Text = Locale.GetString("InstallingMarkItDown");
-            Title = TitleTextBlock.Text;
-            Log($"MarkItDown: installing via {python.Value.exe} {string.Join(' ', python.Value.prefixArgs)}");
-            try
-            {
-                var installArgs = python.Value.prefixArgs.Concat(new[] { "-m", "pip", "install", "--user", "markitdown[all]" });
-                var (exitCode, _, pipError, timedOut) = await RunProcessAsync(python.Value.exe, installArgs, 600_000);
-                if (timedOut || exitCode != 0)
-                {
-                    Log($"MarkItDown: pip install failed (timedOut={timedOut}): {pipError}");
-                    await ShowErrorDialog(Locale.GetString("MarkItDownInstallFailed"),
-                        timedOut ? Locale.GetString("MarkItDownInstallTimedOut") :
-                        string.IsNullOrWhiteSpace(pipError) ? Locale.GetString("PipNoOutput") : pipError);
-                    return false;
-                }
-
-                // pip install --user succeeding doesn't guarantee the resulting Scripts folder is on
-                // PATH yet (pip's own "not on PATH" warning is common) — ask Python directly where its
-                // user site lives rather than hoping the caller's next Process.Start("markitdown")
-                // resolves by luck. The user Scripts folder is always the "Scripts" sibling of the
-                // user site-packages folder in CPython's own layout, on every Python distribution
-                // this has been checked against (python.org installer, Microsoft Store package).
-                var siteArgs = python.Value.prefixArgs.Concat(new[] { "-m", "site", "--user-site" });
-                var (siteExit, siteOut, _, _) = await RunProcessAsync(python.Value.exe, siteArgs, 30_000);
-                if (siteExit == 0 && !string.IsNullOrWhiteSpace(siteOut))
-                {
-                    var scriptsDir = Path.Combine(Path.GetDirectoryName(siteOut.Trim()), "Scripts");
-                    if (File.Exists(Path.Combine(scriptsDir, "markitdown.exe")))
-                    {
-                        AddToPath(scriptsDir);
-                        Log($"MarkItDown: added {scriptsDir} to PATH");
-                    }
-                }
-
-                Log("MarkItDown: install finished");
-                return true;
-            }
-            finally
-            {
-                ImportMarkItDownMenuItem.IsEnabled = true;
-            }
-        }
-
-        private static async Task<(string exe, string[] prefixArgs)?> FindPythonLauncherAsync()
-        {
-            // "py -3" (the Windows Python launcher) first since it's the most reliable way to find a
-            // real Python 3 regardless of what's on PATH; "python"/"python3" as fallbacks for machines
-            // without the launcher installed.
-            var candidates = new (string exe, string[] prefixArgs)[]
-            {
-                ("py", new[] { "-3" }),
-                ("python", Array.Empty<string>()),
-                ("python3", Array.Empty<string>()),
-            };
-            foreach (var candidate in candidates)
-            {
-                var (exitCode, _, _, _) = await RunProcessAsync(candidate.exe, candidate.prefixArgs.Concat(new[] { "--version" }), 10_000);
-                if (exitCode == 0) return candidate;
-            }
-            return null;
-        }
-
-        // Adds directory to PATH in both the Process scope (so it's visible to this already-running
-        // app immediately — no restart needed before the retried conversion below) and the User scope
-        // (so it's still there the next time Caret, or any new terminal, starts).
-        private static void AddToPath(string directory)
-        {
-            foreach (var target in new[] { EnvironmentVariableTarget.Process, EnvironmentVariableTarget.User })
-            {
-                var path = Environment.GetEnvironmentVariable("PATH", target) ?? "";
-                var parts = path.Split(';', StringSplitOptions.RemoveEmptyEntries);
-                if (parts.Contains(directory, StringComparer.OrdinalIgnoreCase)) continue;
-                Environment.SetEnvironmentVariable("PATH", path.TrimEnd(';') + ";" + directory, target);
-            }
-        }
-
-        // Generic subprocess runner shared by MarkItDown's conversion, install, and Python-detection
-        // paths. exitCode is null when the executable itself couldn't be found (Win32Exception from
-        // Process.Start) — distinct from a real, ran-but-failed exit code — so callers can tell "not
-        // installed" apart from "installed but errored".
-        private static async Task<(int? exitCode, string stdout, string stderr, bool timedOut)> RunProcessAsync(
-            string fileName, IEnumerable<string> args, int timeoutMs)
-        {
-            var startInfo = new System.Diagnostics.ProcessStartInfo
-            {
-                FileName = fileName,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                // Without both of these, non-ASCII text round-trips through the Windows ANSI code
-                // page instead of UTF-8 on both ends: Python's own stdout defaults to the console code
-                // page on a redirected pipe (mangling anything outside it to "?"), and .NET's Process
-                // decodes redirected output with the system codepage by default too, not UTF-8. Any
-                // accented/CJK/Cyrillic text in the source document would otherwise come through
-                // silently corrupted with no error — this machine's own file paths already have
-                // accented characters, so this isn't a hypothetical case.
-                StandardOutputEncoding = System.Text.Encoding.UTF8,
-                StandardErrorEncoding = System.Text.Encoding.UTF8,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-            };
-            startInfo.Environment["PYTHONIOENCODING"] = "utf-8";
-            startInfo.Environment["PYTHONUTF8"] = "1";
-            foreach (var arg in args) startInfo.ArgumentList.Add(arg);
-            using var process = new System.Diagnostics.Process { StartInfo = startInfo };
-            try
-            {
-                process.Start();
-            }
-            catch (System.ComponentModel.Win32Exception)
-            {
-                return (null, null, null, false);
-            }
-            var stdoutTask = process.StandardOutput.ReadToEndAsync();
-            var stderrTask = process.StandardError.ReadToEndAsync();
-            var exited = await Task.Run(() => process.WaitForExit(timeoutMs));
-            if (!exited)
-            {
-                try { process.Kill(entireProcessTree: true); } catch { /* best-effort */ }
-                return (null, null, null, true);
-            }
-            var stdout = await stdoutTask;
-            var stderr = await stderrTask;
-            return (process.ExitCode, stdout, stderr, false);
-        }
-
         // --- Image handling ---
         // Reimplemented, not ported: the original's ImageToolbar/ImageSelector floating controls and
         // drag-drop-onto-EditorContainer path aren't built — this is the same PostMessage("InsertImage",
@@ -1750,11 +1461,11 @@ namespace Typedown.WinUI
             AboutAppNameText.Text = Config.AppName;
             AboutAppVersionText.Text = Config.AppVersion;
             CheckForUpdatesToggle.IsOn = settings.CheckForUpdates;
-            // Store: the Store delivers updates. Policy: the organisation manages them. The dev build
-            // keeps the panel so "Check now" can be tried.
-            var updatesManaged = Config.IsStoreInstall || Config.PolicyDisablesUpdateCheck;
+            // Portable build: no update check (the GitHub releases are the installable Caret, not this
+            // folder); a new version is a new folder. Policy: the organisation manages updates.
+            var updatesManaged = !Config.IsPackaged || Config.IsStoreInstall || Config.PolicyDisablesUpdateCheck;
             UpdateSettingsPanel.Visibility = updatesManaged ? Visibility.Collapsed : Visibility.Visible;
-            StoreUpdatesText.Text = Locale.GetString(Config.IsStoreInstall ? "StoreUpdatesNote" : "PolicyUpdatesNote");
+            StoreUpdatesText.Text = Locale.GetString(!Config.IsPackaged ? "PortableUpdatesNote" : Config.IsStoreInstall ? "StoreUpdatesNote" : "PolicyUpdatesNote");
             StoreUpdatesText.Visibility = updatesManaged ? Visibility.Visible : Visibility.Collapsed;
             LanguageComboBox.SelectedIndex = Math.Max(0, Array.IndexOf(new[] { "default", "en", "fr", "es" }, settings.Language));
             LanguageRestartText.Visibility = Visibility.Collapsed;

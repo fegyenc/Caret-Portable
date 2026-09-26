@@ -813,30 +813,11 @@
   <data name="ConvertingWithMarkItDown" xml:space="preserve">
     <value>Conversion avec MarkItDown...</value>
   </data>
-  <data name="MarkItDownStillNotFound" xml:space="preserve">
-    <value>MarkItDown toujours introuvable</value>
-  </data>
-  <data name="MarkItDownStillNotFoundDetail" xml:space="preserve">
-    <value>MarkItDown a été installé, mais Caret ne le trouve toujours pas. Fermez et rouvrez Caret, ou installez-le manuellement avec la commande :
-
-    pip install markitdown[all]</value>
-  </data>
-  <data name="MarkItDownConversionFailed" xml:space="preserve">
-    <value>Échec de la conversion avec MarkItDown</value>
-  </data>
-  <data name="MarkItDownNoOutput" xml:space="preserve">
-    <value>MarkItDown n'a produit aucun résultat.</value>
-  </data>
   <data name="MarkItDownTimedOut" xml:space="preserve">
-    <value>MarkItDown n'a pas terminé dans le délai de 2 minutes.</value>
+    <value>MarkItDown a abandonné ce fichier au bout de 5 minutes.</value>
   </data>
   <data name="MarkItDownNotFound" xml:space="preserve">
     <value>MarkItDown introuvable</value>
-  </data>
-  <data name="MarkItDownInstallPrompt" xml:space="preserve">
-    <value>Caret peut installer MarkItDown (l'outil de Microsoft qui convertit les documents en Markdown) dès maintenant. Il exécute « pip install --user markitdown[all] » avec Python sur cet ordinateur, nécessite une connexion Internet et peut prendre quelques minutes.
-
-L'installer maintenant ?</value>
   </data>
   <data name="Install" xml:space="preserve">
     <value>Installer</value>
@@ -846,9 +827,6 @@ L'installer maintenant ?</value>
   </data>
   <data name="PythonNotFound" xml:space="preserve">
     <value>Python introuvable</value>
-  </data>
-  <data name="PythonNotFoundDetail" xml:space="preserve">
-    <value>Caret n'a pas trouvé Python sur cet ordinateur, or MarkItDown en a besoin pour fonctionner. Installez Python depuis python.org (cochez « Add python.exe to PATH » pendant l'installation), puis relancez l'importation.</value>
   </data>
   <data name="OpenPythonOrg" xml:space="preserve">
     <value>Ouvrir python.org</value>
@@ -861,9 +839,6 @@ L'installer maintenant ?</value>
   </data>
   <data name="MarkItDownInstallTimedOut" xml:space="preserve">
     <value>L'installation de MarkItDown n'a pas abouti dans le délai de 10 minutes.</value>
-  </data>
-  <data name="PipNoOutput" xml:space="preserve">
-    <value>pip install markitdown[all] a échoué sans aucun message.</value>
   </data>
   <data name="UpdateAvailableTitle" xml:space="preserve">
     <value>Caret {0} est disponible</value>
@@ -1058,7 +1033,7 @@ L'installer maintenant ?</value>
     <value>Convertir en Markdown</value>
   </data>
   <data name="ConvertIntro" xml:space="preserve">
-    <value>Transformez vos fichiers Word, Excel, PowerPoint et PDF en Markdown propre. Le résultat est généralement bien plus léger, conserve les titres, les listes et les tableaux, et consomme beaucoup moins de jetons lorsque vous le partagez avec un assistant d'IA.</value>
+    <value>Transformez vos fichiers Word, Excel, PowerPoint, PDF, Outlook et autres en Markdown propre avec Microsoft MarkItDown. Le résultat est généralement bien plus léger, conserve les titres, les listes et les tableaux, et consomme beaucoup moins de jetons lorsque vous le partagez avec un assistant d'IA.</value>
   </data>
   <data name="ConvertDropHere" xml:space="preserve">
     <value>Déposez des fichiers ou des dossiers ici</value>
@@ -1070,7 +1045,7 @@ L'installer maintenant ?</value>
     <value>Choisir un dossier...</value>
   </data>
   <data name="ConvertFormats" xml:space="preserve">
-    <value>Word (.docx) · Excel (.xlsx) · PowerPoint (.pptx) · PDF · CSV. Conversion sur ce PC, rien n'est envoyé en ligne.</value>
+    <value>Word (.docx) · Excel (.xlsx, .xls) · PowerPoint (.pptx) · PDF · CSV · Outlook (.msg) · HTML · EPUB · JSON · XML · ZIP. Conversion sur ce PC, rien n'est envoyé en ligne.</value>
   </data>
   <data name="ConvertSaveTo" xml:space="preserve">
     <value>Enregistrer les fichiers Markdown</value>
@@ -1083,9 +1058,6 @@ L'installer maintenant ?</value>
   </data>
   <data name="ConvertSaveToFolderPath" xml:space="preserve">
     <value>Dans {0}</value>
-  </data>
-  <data name="ConvertExtractImages" xml:space="preserve">
-    <value>Extraire les images</value>
   </data>
   <data name="ConvertCopyAll" xml:space="preserve">
     <value>Tout copier pour l'IA</value>
@@ -1147,9 +1119,6 @@ L'installer maintenant ?</value>
   <data name="ConvertSmaller" xml:space="preserve">
     <value>{0} % plus léger</value>
   </data>
-  <data name="ConvertSkippedImages" xml:space="preserve">
-    <value>certaines images dans un format non pris en charge ont été ignorées</value>
-  </data>
   <data name="ConvertNoWriteAccess" xml:space="preserve">
     <value>Caret ne peut pas enregistrer dans ce dossier. Choisissez-en un autre dans « Enregistrer les fichiers Markdown ».</value>
   </data>
@@ -1198,18 +1167,66 @@ L'installer maintenant ?</value>
   <data name="ThirdPartyNotices" xml:space="preserve">
     <value>Avis de tiers</value>
   </data>
-  <data name="MarkItDownManualInstall" xml:space="preserve">
-    <value>Ce format est converti par MarkItDown de Microsoft, qui n'est pas installé. Pour l'utiliser, installez Python et exécutez « pip install markitdown[all] », puis réessayez.
-
-Les fichiers Word, Excel, PowerPoint, PDF et CSV n'en ont pas besoin : Caret les convertit lui-même.</value>
-  </data>
-  <data name="LearnMore" xml:space="preserve">
-    <value>En savoir plus</value>
-  </data>
   <data name="StoreUpdatesNote" xml:space="preserve">
     <value>Les mises à jour sont fournies par le Microsoft Store.</value>
   </data>
   <data name="PolicyUpdatesNote" xml:space="preserve">
     <value>Les mises à jour sont gérées par votre organisation.</value>
+  </data>
+  <data name="ConvertMarkItDownNotReady" xml:space="preserve">
+    <value>Non converti : MarkItDown n'est pas encore configuré. Voir Convertisseur ci-dessus.</value>
+  </data>
+  <data name="ConvertMissingDependency" xml:space="preserve">
+    <value>Il manque à MarkItDown les paquets supplémentaires pour ce format. Cliquez sur Installer MarkItDown ci-dessus, ou exécutez : python -m pip install --user "markitdown[all]"</value>
+  </data>
+  <data name="EngineTitle" xml:space="preserve">
+    <value>Convertisseur</value>
+  </data>
+  <data name="EngineChecking" xml:space="preserve">
+    <value>Recherche de Python et de MarkItDown…</value>
+  </data>
+  <data name="EngineReady" xml:space="preserve">
+    <value>Microsoft MarkItDown {0} dans Python {1}</value>
+  </data>
+  <data name="EngineNoMarkItDown" xml:space="preserve">
+    <value>Python {0} est présent, mais MarkItDown n'y est pas encore installé.</value>
+  </data>
+  <data name="EngineNoPython" xml:space="preserve">
+    <value>Aucun Python trouvé. Installez Python pour votre compte (sans droits d'administrateur), ou choisissez python.exe s'il se trouve à un endroit où Caret ne regarde pas.</value>
+  </data>
+  <data name="EngineNoPythonDetail" xml:space="preserve">
+    <value>Caret convertit les documents avec Microsoft MarkItDown, qui s'exécute dans Python. Caret a cherché aux emplacements habituels et dans le PATH, sans trouver de Python.
+
+Si Python est installé ailleurs, choisissez son python.exe. Sinon, installez Python 3.10 ou une version ultérieure pour votre compte (le programme d'installation de python.org fonctionne sans droits d'administrateur), puis réessayez.</value>
+  </data>
+  <data name="EngineChoosePython" xml:space="preserve">
+    <value>Choisir python.exe…</value>
+  </data>
+  <data name="EngineDetectAgain" xml:space="preserve">
+    <value>Rechercher à nouveau</value>
+  </data>
+  <data name="EngineUseAutomatic" xml:space="preserve">
+    <value>Utiliser la détection automatique</value>
+  </data>
+  <data name="EngineInstallMarkItDown" xml:space="preserve">
+    <value>Installer MarkItDown</value>
+  </data>
+  <data name="EngineInstallPrompt" xml:space="preserve">
+    <value>Caret peut installer Microsoft MarkItDown dans Python {0} maintenant, pour votre compte uniquement (pip install --user). Aucun droit d'administrateur n'est nécessaire et rien d'autre ne change sur le PC. Les paquets sont téléchargés depuis pypi.org, ce qui peut prendre quelques minutes.</value>
+  </data>
+  <data name="EngineManualInstall" xml:space="preserve">
+    <value>Pour installer MarkItDown vous-même, exécutez cette commande dans un terminal, puis cliquez sur Rechercher à nouveau :</value>
+  </data>
+  <data name="EngineCopyCommand" xml:space="preserve">
+    <value>Copier la commande</value>
+  </data>
+  <data name="EngineNotAPython" xml:space="preserve">
+    <value>Ce n'est pas un Python fonctionnel</value>
+  </data>
+  <data name="EngineNotAPythonDetail" xml:space="preserve">
+    <value>Caret n'a pas pu l'exécuter. Choisissez le python.exe d'une installation de Python 3.10 ou ultérieure.</value>
+  </data>
+  <data name="PortableUpdatesNote" xml:space="preserve">
+    <value>Ceci est la version portable : pour la mettre à jour, remplacez le dossier par une version plus récente. Vos paramètres se trouvent dans le dossier Data, à côté de Caret.exe.</value>
   </data>
 </root>

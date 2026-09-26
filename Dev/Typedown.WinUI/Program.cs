@@ -27,7 +27,9 @@ namespace Typedown.WinUI
         // Any string works as the key as long as it's unique to this app — it's a machine-wide name
         // (not scoped to install path or user), so it's namespaced with the app name the same way the
         // original's Mutex ("Typedown.App.Mutex") and pipe ("Typedown.App.PiPe") names were.
-        private static readonly string InstanceKey = $"{Config.AppName}.SingleInstance";
+        // Portable: its own key, so launching it while an installed Caret is running doesn't hand the
+        // launch over to the installed app.
+        private static readonly string InstanceKey = $"{Config.AppName}.Portable.SingleInstance";
 
         // Captured once the real UI thread's dispatcher exists (inside Application.Start's callback,
         // below) so OnActivated — which Microsoft.Windows.AppLifecycle raises on a thread-pool thread,
