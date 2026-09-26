@@ -648,6 +648,7 @@ namespace Typedown.WinUI
                     Environment.SetEnvironmentVariable("WEBVIEW2_USER_DATA_FOLDER", Path.Combine(Config.GetLocalFolderPath(), "WebView2"));
                 await EditorView.EnsureCoreWebView2Async();
                 Log("CoreWebView2 initialized OK");
+                Log($"Data folder: {Config.GetLocalFolderPath()}; WebView2 profile: {EditorView.CoreWebView2.Environment.UserDataFolder}");
                 var staticsPath = Path.Combine(AppContext.BaseDirectory, "Resources", "Statics");
                 EditorView.CoreWebView2.SetVirtualHostNameToFolderMapping(
                     "typedown.editor.local", staticsPath, CoreWebView2HostResourceAccessKind.Allow);

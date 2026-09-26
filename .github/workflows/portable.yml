@@ -79,7 +79,10 @@ jobs:
           if ($p.HasExited) { throw "Caret exited on its own (exit code $($p.ExitCode))" }
           Stop-Process -Id $p.Id -Force
           if (-not $ok) { throw 'Caret started but the editor never finished loading' }
-          if (-not (Test-Path (Join-Path $dir 'Data\WebView2'))) { throw 'Caret did not keep its data in the Data folder next to Caret.exe' }
+          'Top of the app folder:'; Get-ChildItem $dir -Directory | Select-Object -ExpandProperty Name
+          if (Test-Path (Join-Path $dir 'Data')) { 'Data folder:'; Get-ChildItem (Join-Path $dir 'Data') | Select-Object -ExpandProperty Name }
+          if (-not (Test-Path (Join-Path $dir 'Data\Settings.json')) -and -not (Test-Path (Join-Path $dir 'Data\WebView2'))) { throw 'Caret did not keep its data in the Data folder next to Caret.exe' }
+          if (-not (Test-Path (Join-Path $dir 'Data\WebView2'))) { throw 'The WebView2 profile is not in the Data folder (see "WebView2 profile" in the log above)' }
           'Caret started from a plain folder and loaded the editor.'
 
       - name: Zip
