@@ -54,7 +54,7 @@ foreach ($dir in Get-ChildItem $app -Directory) {
     $removed++
 }
 
-foreach ($required in 'Caret.exe', 'README.md', 'app\Caret.exe', 'app\Resources\Statics\index.html', 'app\Strings\en\AppResources.resw') {
+foreach ($required in 'Caret.exe', 'README.md', 'app\Caret.exe', 'app\Resources\Statics\index.html', 'app\Strings\en\AppResources.resw', 'app\markitdown-plugins\markitdown_caret_email\__init__.py', 'app\markitdown-plugins\markitdown_caret_email\rules\en.json') {
     if (-not (Test-Path (Join-Path $dest $required))) { throw "$required is missing from the portable folder" }
 }
 $size = (Get-ChildItem $dest -Recurse -File | Measure-Object Length -Sum).Sum / 1MB

@@ -25,7 +25,10 @@ namespace Typedown.WinUI.Services
 
         public List<TrashEntry> Entries { get; private set; } = new();
 
-        public TrashService()
+        public TrashService() => Reload();
+
+        // Reread before a change or a list build, so one window doesn't save over another's entries.
+        public void Reload()
         {
             try
             {
@@ -39,6 +42,7 @@ namespace Typedown.WinUI.Services
 
         public void Record(string filePath)
         {
+            Reload();
             Entries.Insert(0, new TrashEntry { Name = Path.GetFileName(filePath), OriginalPath = filePath, DeletedAt = DateTime.Now });
             while (Entries.Count > MaxCount) Entries.RemoveAt(Entries.Count - 1);
             Save();
@@ -46,6 +50,7 @@ namespace Typedown.WinUI.Services
 
         public void Clear()
         {
+            Reload();
             Entries.Clear();
             Save();
         }

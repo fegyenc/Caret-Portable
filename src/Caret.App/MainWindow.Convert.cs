@@ -32,6 +32,7 @@ namespace Typedown.WinUI
 
         // Big PDFs take a while; a file that takes longer than this is given up on.
         private const int ConvertFileTimeoutMs = 300_000;
+        private static readonly string[] EmailExtensions = { ".msg", ".eml" };
 
         private void SetConvertPageVisible(bool visible)
         {
@@ -44,6 +45,7 @@ namespace Typedown.WinUI
             convertPageReady = true;
             ConvertResultsList.ItemsSource = conversions;
             convertOptionsUpdating = true;
+            ConvertRedactToggle.IsOn = settings.ConvertEmailRedact;
             UpdateConvertOutputChoice();
             convertOptionsUpdating = false;
             _ = RefreshPythonStatusAsync();
@@ -59,17 +61,24 @@ namespace Typedown.WinUI
         private void CloseConvertPage()
         {
             SetConvertPageVisible(false);
-            if ((NavListView.SelectedItem as ListViewItem)?.Tag as string == "Convert") NavListView.SelectedIndex = 0;
+            if (SelectedNavTag is "Convert" or "Emails") SelectNav("Home");
             // Back to writing. Without this, focus falls to the next control (the status bar's word
             // count button), which also pops up its tooltip.
             EditorView.Focus(FocusState.Programmatic);
         }
 
-        private void HomeConvertButton_Click(object sender, RoutedEventArgs e)
+        private void HomeConvertButton_Click(object sender, RoutedEventArgs e) => ShowConvertPage("Convert");
+
+        // The Home card and File menu entry for emails go straight to picking them.
+        private async void HomeEmailsButton_Click(object sender, RoutedEventArgs e)
         {
-            var item = NavListView.Items.OfType<ListViewItem>().FirstOrDefault(i => i.Tag as string == "Convert");
-            if (item != null && !ReferenceEquals(NavListView.SelectedItem, item)) NavListView.SelectedItem = item;
-            else SetConvertPageVisible(true);
+            ShowConvertPage("Emails");
+            await ChooseEmailsAsync();
+        }
+
+        private void ShowConvertPage(string tag)
+        {
+            if (!SelectNav(tag)) SetConvertPageVisible(true);
         }
 
         private void ConvertBack_Click(object sender, RoutedEventArgs e) => CloseConvertPage();
@@ -99,6 +108,11 @@ namespace Typedown.WinUI
             convertOptionsUpdating = false;
         }
 
+        private void ConvertRedactToggle_Toggled(object sender, RoutedEventArgs e)
+        {
+            if (!convertOptionsUpdating) settings.ConvertEmailRedact = ConvertRedactToggle.IsOn;
+        }
+
         // --- Input ---
 
         private async void ConvertChooseFiles_Click(object sender, RoutedEventArgs e)
@@ -106,6 +120,18 @@ namespace Typedown.WinUI
             var picker = new FileOpenPicker();
             InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
             foreach (var ext in MarkItDownFormats.Extensions.Concat(MarkItDownFormats.LegacyOfficeExtensions)) picker.FileTypeFilter.Add(ext);
+            var files = await picker.PickMultipleFilesAsync();
+            if (files?.Count > 0) await ConvertPathsAsync(files.Select(f => f.Path));
+        }
+
+        // Outlook mail: drag messages from Outlook to a folder (or save them as .msg), then pick them here.
+        private async void ConvertChooseEmails_Click(object sender, RoutedEventArgs e) => await ChooseEmailsAsync();
+
+        private async Task ChooseEmailsAsync()
+        {
+            var picker = new FileOpenPicker();
+            InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
+            foreach (var ext in EmailExtensions) picker.FileTypeFilter.Add(ext);
             var files = await picker.PickMultipleFilesAsync();
             if (files?.Count > 0) await ConvertPathsAsync(files.Select(f => f.Path));
         }
@@ -146,11 +172,12 @@ namespace Typedown.WinUI
                     IEnumerable<string> found;
                     try
                     {
-                        found = Directory.EnumerateFiles(input, "*", new EnumerationOptions { RecurseSubdirectories = true, IgnoreInaccessible = true })
+                        // On a worker thread: a big dropped folder must not freeze the window
+                        found = await Task.Run(() => Directory.EnumerateFiles(input, "*", new EnumerationOptions { RecurseSubdirectories = true, IgnoreInaccessible = true })
                             .Where(f => MarkItDownFormats.IsSupported(f) || MarkItDownFormats.IsLegacyOffice(f))
                             // Office lock files ("~$report.docx").
                             .Where(f => !Path.GetFileName(f).StartsWith("~$"))
-                            .OrderBy(f => f, StringComparer.OrdinalIgnoreCase).ToList();
+                            .OrderBy(f => f, StringComparer.OrdinalIgnoreCase).ToList());
                     }
                     catch (Exception ex)
                     {
@@ -232,9 +259,9 @@ namespace Typedown.WinUI
                 {
                     worker?.Dispose();
                     worker = await MarkItDownWorker.StartAsync(python.Executable);
-                    Log($"Convert: MarkItDown {worker.Version} started in {python.Executable}");
+                    Log($"Convert: MarkItDown {worker.Version} started in {python.Executable}; email plugin: {(worker.HasEmailPlugin ? "yes" : worker.EmailPluginError)}");
                 }
-                var result = await worker.ConvertAsync(source, ConvertFileTimeoutMs);
+                var result = await worker.ConvertAsync(source, ConvertFileTimeoutMs, settings.ConvertEmailRedact);
                 if (!result.Ok)
                 {
                     Log($"Convert: MarkItDown failed {source}: {result.ErrorKind}: {result.Error}");
@@ -263,6 +290,8 @@ namespace Typedown.WinUI
                 var saved = item.SourceBytes > 0 ? Math.Floor(100.0 * (item.SourceBytes - item.MarkdownBytes) / item.SourceBytes) : 0;
                 if (saved >= 1)
                     detail += " · " + Locale.Format("ConvertSmaller", saved);
+                if (EmailExtensions.Contains(Path.GetExtension(source).ToLowerInvariant()) && settings.ConvertEmailRedact && worker.HasEmailPlugin)
+                    detail += " · " + Locale.GetString("ConvertPersonalDataMasked");
                 item.Detail = detail;
                 item.ActionsVisibility = Visibility.Visible;
                 Log($"Convert: {source} -> {outputPath} ({item.SourceBytes} -> {item.MarkdownBytes} bytes, ~{item.Tokens} tokens)");

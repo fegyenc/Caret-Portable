@@ -29,6 +29,24 @@ namespace Typedown.WinUI.Utilities
             return Path.Combine(BackupFolder, $"{hash}_{fileName}");
         }
 
+        // A fresh slot for an untitled document ("untitled-3f9a1c0e"). The file name keeps "untitled",
+        // so UntitledBackups finds it; the slot of a single untitled document before tabs ("") too.
+        public static string NewUntitledKey() => "untitled-" + Guid.NewGuid().ToString("N").Substring(0, 8);
+
+        // Backups of untitled documents: left behind by a crash, or by a window that closed without
+        // its prompt. Offered back at startup (MainWindow.RecoverUntitledBackups).
+        public static string[] UntitledBackups()
+        {
+            try
+            {
+                return Directory.Exists(BackupFolder) ? Directory.GetFiles(BackupFolder, "*_untitled*") : Array.Empty<string>();
+            }
+            catch
+            {
+                return Array.Empty<string>();
+            }
+        }
+
         public static async Task<bool> Backup(string sourcePath, string markdown)
         {
             try

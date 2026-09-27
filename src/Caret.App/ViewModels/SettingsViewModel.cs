@@ -56,7 +56,9 @@ namespace Typedown.WinUI.ViewModels
         public bool AutoPairMarkdownSyntax { get => GetSettingValue(true); set => SetSettingValue(value); }
         public string EditorAreaWidth { get => GetSettingValue("1200px"); set => SetSettingValue(value); }
         public bool AutoSave { get => GetSettingValue(false); set => SetSettingValue(value); }
-        public AppTheme AppTheme { get => GetSettingValue(AppTheme.Default); set => SetSettingValue(value); }
+        // An administrator can set the defaults of AppTheme, ColorScheme, AccentSource and LayoutPreset
+        // (Config.PolicyDefault*, docs/deployment.md); a user's own choice still wins.
+        public AppTheme AppTheme { get => GetSettingValue(Config.PolicyDefaultTheme switch { "light" => AppTheme.Light, "dark" => AppTheme.Dark, _ => AppTheme.Default }); set => SetSettingValue(value); }
         public string Language { get => GetSettingValue("default"); set => SetSettingValue(value); }
         public int WordCountMethod { get => GetSettingValue(0); set => SetSettingValue(value); }
         public int TabSize { get => GetSettingValue(4); set => SetSettingValue(value); }
@@ -90,6 +92,37 @@ namespace Typedown.WinUI.ViewModels
         // Portable build: the python.exe the user chose for MarkItDown. Empty = find one automatically
         // (Services/MarkItDown/PythonLocator.cs).
         public string PythonPath { get => GetSettingValue(""); set => SetSettingValue(value); }
+        // New since the fork: document tabs (MainWindow.Tabs.cs). Off = one document per window, as before.
+        public bool UseTabs { get => GetSettingValue(true); set => SetSettingValue(value); }
+        // Reopen the documents that were open when Caret last closed.
+        public bool RestoreTabs { get => GetSettingValue(true); set => SetSettingValue(value); }
+        // Those documents' paths, one per line (the settings store keeps scalars, not lists), and
+        // which one was in front.
+        public string OpenTabs { get => GetSettingValue(""); set => SetSettingValue(value); }
+        public int ActiveTab { get => GetSettingValue(0); set => SetSettingValue(value); }
+        // Emails (.msg, .eml): replace names, addresses, phone numbers, IBANs and IDs with placeholders.
+        public bool ConvertEmailRedact { get => GetSettingValue(true); set => SetSettingValue(value); }
+        // Interface review, phase 2: the colour scheme (Utilities/ColorSchemes.cs), where the accent comes
+        // from ("scheme" or "windows"), and the window material ("solid", "mica", "micaalt"; it replaces
+        // UseMicaEffect, whose value is its default, and UseEditorMicaEffect: the page stays solid).
+        public string ColorScheme { get => GetSettingValue(Config.PolicyDefaultColorScheme ?? "copper"); set => SetSettingValue(value); }
+        public string AccentSource { get => GetSettingValue(Config.PolicyDefaultAccentColor ?? "scheme"); set => SetSettingValue(value); }
+        public string WindowMaterial { get => GetSettingValue(UseMicaEffect ? "mica" : "solid"); set => SetSettingValue(value); }
+        // The sidebar's illustrated card.
+        public bool ShowDecorativeCard { get => GetSettingValue(true); set => SetSettingValue(value); }
+        // Phase 3: "classic", "streamlined" or "distraction". A new install starts Streamlined (set when
+        // there's no settings file yet, LoadAllSettings); an existing one keeps Classic, the layout it had.
+        // An administrator's default layout applies to both.
+        public string LayoutPreset { get => GetSettingValue(Config.PolicyDefaultLayout ?? "classic"); set => SetSettingValue(value); }
+        // Where F11 goes back to.
+        public string LayoutBeforeDistraction { get => GetSettingValue("streamlined"); set => SetSettingValue(value); }
+        public string SidebarPosition { get => GetSettingValue("left"); set => SetSettingValue(value); }
+        public bool SidebarRail { get => GetSettingValue(false); set => SetSettingValue(value); }
+        // Section colours over the scheme, per theme: "band=#EAD9C4;page=#DCE6EF" (MainWindow.Sections.cs).
+        public string SectionColorsLight { get => GetSettingValue(""); set => SetSettingValue(value); }
+        public string SectionColorsDark { get => GetSettingValue(""); set => SetSettingValue(value); }
+        // Tab colours, by file: "path<TAB>#RRGGBB" per line.
+        public string TabColors { get => GetSettingValue(""); set => SetSettingValue(value); }
         public InsertImageAction InsertClipboardImageAction { get => GetSettingValue(InsertImageAction.None); set => SetSettingValue(value); }
         public string InsertClipboardImageCopyPath { get => GetSettingValue("./images"); set => SetSettingValue(value); }
         public int? InsertClipboardImageUseUploadConfigId { get => GetSettingValue<int?>(null); set => SetSettingValue(value); }
@@ -139,6 +172,9 @@ namespace Typedown.WinUI.ViewModels
             {
                 store = new JObject();
             }
+            // A new install. Not written when an administrator set a default layout, so a later change to
+            // that policy still reaches this user.
+            if (!store.HasValues && Config.PolicyDefaultLayout == null) store["LayoutPreset"] = "streamlined";
         }
 
         private async void SaveAllSettings()

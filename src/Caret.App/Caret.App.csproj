@@ -22,7 +22,7 @@
 		<AssemblyTitle>Caret Portable</AssemblyTitle>
 		<Company>Ferenc Works</Company>
 		<Copyright>Copyright © 2026 Ferenc Works. Based on Typedown, copyright © 2022 ZZF.</Copyright>
-		<Version>1.0.1</Version>
+		<Version>1.4.0</Version>
 		<Nullable>disable</Nullable>
 		<Configurations>Debug;Release;Debug_Local</Configurations>
 		<!-- Turns off the WinUI 3 SDK-generated Program/Main (see the #if in the generated App.g.i.cs)
@@ -53,6 +53,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="8.2.250402" />
 		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.6.250602001" />
 		<PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4129.50" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
@@ -68,6 +69,10 @@
 		<!-- The window and title-bar icons, loaded from the output folder at run time (MainWindow). -->
 		<Content Remove="Assets\**" />
 		<Content Include="Assets\logo.ico;Assets\AppIcon.png" CopyToOutputDirectory="PreserveNewest" />
+		<!-- Caret's MarkItDown email plugin (plugins/markitdown-email), loaded from here by the worker
+		     (Services/MarkItDown/MarkItDownWorker.cs) without a pip install. -->
+		<Content Include="..\..\plugins\markitdown-email\src\markitdown_caret_email\*.py" Link="markitdown-plugins\markitdown_caret_email\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+		<Content Include="..\..\plugins\markitdown-email\src\markitdown_caret_email\rules\*.json" Link="markitdown-plugins\markitdown_caret_email\rules\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
 		<Content Include="..\..\LICENSE" Link="LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
 		<Content Include="..\..\THIRD-PARTY-NOTICES.md" Link="THIRD-PARTY-NOTICES.md" CopyToOutputDirectory="PreserveNewest" />
 	</ItemGroup>

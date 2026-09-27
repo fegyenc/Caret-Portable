@@ -59,7 +59,20 @@ Then click **Detect again**.
 - **Copy all for AI** puts every converted file on the clipboard as one text, ready to paste into an assistant.
 - **File → Import Document as Markdown…** converts one file and opens it straight in the editor.
 
-Supported formats: Word (.docx), Excel (.xlsx, .xls), PowerPoint (.pptx), PDF, CSV, Outlook (.msg), HTML, EPUB, Jupyter (.ipynb), JSON, XML, RSS, plain text and ZIP archives of those.
+Supported formats: Word (.docx), Excel (.xlsx, .xls), PowerPoint (.pptx), PDF, CSV, Outlook emails (.msg, .eml), HTML, EPUB, Jupyter (.ipynb), JSON, XML, RSS, plain text and ZIP archives of those.
+
+## Outlook emails
+
+Drag emails out of Outlook into a folder (they become `.msg` files), or save them as `.eml`. Then choose **Outlook emails** in the sidebar, or **Choose emails…** on the Convert page.
+
+- **One thread per email.** A reply contains the whole conversation below it, so each quoted message becomes its own section, oldest first, with sender, date and recipients.
+- **Less clutter.** Repeated quotes, signatures, "Sent from my iPhone", confidentiality disclaimers and external-sender banners are removed, in English, French, Spanish and Polish.
+- **Attachments** (Word, Excel, PDF…) are converted too, under **Attachments**.
+- **Mask personal data** is on by default. Names of everyone in the thread, email addresses, phone numbers, IBANs, card numbers and national IDs become placeholders such as `[PERSON-1]` and `[EMAIL-1]`.
+
+This uses no AI, only fixed rules, so someone mentioned only in the text ("ask Marta from finance") can stay visible. **Read the result before you share anything sensitive.**
+
+Emails are converted by Caret's email plugin for MarkItDown, which ships inside the `app` folder, so there is nothing extra to install.
 
 Older .doc and .ppt files need to be saved as .docx or .pptx first. Scanned PDFs without a text layer have no text to extract.
 

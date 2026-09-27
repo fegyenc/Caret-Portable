@@ -13,7 +13,7 @@ namespace Typedown.WinUI.Services.MarkItDown
         public static IReadOnlyList<string> Extensions { get; } = new[]
         {
             ".docx", ".pptx", ".xlsx", ".xls", ".pdf", ".csv",
-            ".msg", ".html", ".htm", ".epub", ".ipynb", ".json", ".xml", ".rss", ".txt", ".zip",
+            ".msg", ".eml", ".html", ".htm", ".epub", ".ipynb", ".json", ".xml", ".rss", ".txt", ".zip",
         };
 
         // Older binary Office formats MarkItDown can't read (.xls it can).
@@ -43,7 +43,8 @@ namespace Typedown.WinUI.Services.MarkItDown
                 if (new FileInfo(path).Length > MaxCharsetProbeBytes) return null;
                 var bytes = File.ReadAllBytes(path);
                 if (bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF) return "utf-8-sig";
-                if (bytes.Length >= 4 && bytes[0] == 0xFF && bytes[1] == 0xFE && bytes[2] == 0 && bytes[3] == 0) return "utf-32";
+                if (bytes.Length >= 4 && ((bytes[0] == 0xFF && bytes[1] == 0xFE && bytes[2] == 0 && bytes[3] == 0)
+                    || (bytes[0] == 0 && bytes[1] == 0 && bytes[2] == 0xFE && bytes[3] == 0xFF))) return "utf-32";
                 if (bytes.Length >= 2 && ((bytes[0] == 0xFF && bytes[1] == 0xFE) || (bytes[0] == 0xFE && bytes[1] == 0xFF))) return "utf-16";
                 var legacy = Utilities.TextFileEncoding.Decode(bytes).LegacyEncoding;
                 return legacy == null ? "utf-8" : $"cp{legacy.CodePage}";

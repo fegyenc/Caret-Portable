@@ -430,7 +430,7 @@
     <value>Write. Preview. Organize.</value>
   </data>
   <data name="FavoritesEmptyText_Text" xml:space="preserve">
-    <value>No favorites yet — click the star in the title bar, or right-click a file in the folder tree.</value>
+    <value>No favorites yet. Use File &gt; Favorite, right-click a tab, or right-click a file in the folder tree.</value>
   </data>
   <data name="SaveCurrentDocumentAsTemplate" xml:space="preserve">
     <value>Save current document as template...</value>
@@ -997,7 +997,7 @@
     <value>Choose a folder...</value>
   </data>
   <data name="ConvertFormats" xml:space="preserve">
-    <value>Word (.docx) · Excel (.xlsx, .xls) · PowerPoint (.pptx) · PDF · CSV · Outlook (.msg) · HTML · EPUB · JSON · XML · ZIP. Converted on this PC, nothing is uploaded.</value>
+    <value>Word (.docx) · Excel (.xlsx, .xls) · PowerPoint (.pptx) · PDF · CSV · Outlook emails (.msg, .eml) · HTML · EPUB · JSON · XML · ZIP. Converted on this PC, nothing is uploaded.</value>
   </data>
   <data name="ConvertSaveTo" xml:space="preserve">
     <value>Save Markdown files</value>
@@ -1125,6 +1125,421 @@
   <data name="PolicyUpdatesNote" xml:space="preserve">
     <value>Updates are managed by your organization.</value>
   </data>
+  <data name="StatusLegacyEncoding" xml:space="preserve">
+    <value>Markdown · {0}</value>
+  </data>
+  <data name="StatusLegacyEncodingTip" xml:space="preserve">
+    <value>This file isn't saved as UTF-8, so Caret read it with Windows' {0} encoding. Saving it converts it to UTF-8, which every Markdown tool expects.</value>
+  </data>
+  <data name="ConvertChooseEmails" xml:space="preserve">
+    <value>Choose emails...</value>
+  </data>
+  <data name="ConvertChooseEmailsTip" xml:space="preserve">
+    <value>Convert emails saved from Outlook (.msg) or other mail apps (.eml). Drag messages from Outlook into a folder to save them. The whole thread becomes one clean Markdown file, oldest message first, without signatures and disclaimers.</value>
+  </data>
+  <data name="ConvertMaskPersonalData" xml:space="preserve">
+    <value>Mask personal data</value>
+  </data>
+  <data name="ConvertMaskPersonalDataTip" xml:space="preserve">
+    <value>Replaces names, email addresses, phone numbers, IBANs, card numbers and ID numbers with placeholders such as [PERSON-1] before you paste the text into an AI assistant. Rule-based and done on this PC; no AI is used. Names are found from the email's senders and recipients.</value>
+  </data>
+  <data name="ConvertPersonalDataMasked" xml:space="preserve">
+    <value>personal data masked</value>
+  </data>
+  <data name="ConvertEmailsNav" xml:space="preserve">
+    <value>Outlook emails</value>
+  </data>
+  <data name="ConvertEmailCardTitle" xml:space="preserve">
+    <value>Outlook emails to Markdown</value>
+  </data>
+  <data name="ConvertEmailCardText" xml:space="preserve">
+    <value>Turn a whole email thread into one clean file for AI: every reply as its own message, oldest first, without signatures, disclaimers or banners, attachments included. Names, addresses and phone numbers are masked. No AI, and nothing leaves this PC.</value>
+  </data>
+  <data name="NewBadge" xml:space="preserve">
+    <value>New</value>
+  </data>
+  <data name="HomeEmailsTitle" xml:space="preserve">
+    <value>Convert Outlook emails</value>
+  </data>
+  <data name="HomeEmailsSubtitle" xml:space="preserve">
+    <value>Clean threads, personal data masked → AI-ready text</value>
+  </data>
+  <data name="ConvertEmailsMenuItem" xml:space="preserve">
+    <value>Convert Outlook emails...</value>
+  </data>
+  <data name="NotSavedYet" xml:space="preserve">
+    <value>Not saved yet</value>
+  </data>
+  <data name="CloseDocumentMenuItem" xml:space="preserve">
+    <value>Close document</value>
+  </data>
+  <data name="CloseOtherDocuments" xml:space="preserve">
+    <value>Close other documents</value>
+  </data>
+  <data name="CloseDocumentsToTheRight" xml:space="preserve">
+    <value>Close documents to the right</value>
+  </data>
+  <data name="MoveToNewWindow" xml:space="preserve">
+    <value>Move to new window</value>
+  </data>
+  <data name="CloseWindowMenuItem" xml:space="preserve">
+    <value>Close window</value>
+  </data>
+  <data name="CtrlShiftW" xml:space="preserve">
+    <value>Ctrl+Shift+W</value>
+  </data>
+  <data name="UnsavedDocumentsPrompt" xml:space="preserve">
+    <value>These documents have unsaved changes:
+{0}</value>
+  </data>
+  <data name="SaveAll" xml:space="preserve">
+    <value>Save all</value>
+  </data>
+  <data name="RecoverUntitledMany" xml:space="preserve">
+    <value>{0} untitled documents from a previous session were never saved. Recover them?</value>
+  </data>
+  <data name="StartPageTitle" xml:space="preserve">
+    <value>What's next?</value>
+  </data>
+  <data name="StartPageSubtitle" xml:space="preserve">
+    <value>Start a note, open a file, or turn documents and Outlook emails into Markdown.</value>
+  </data>
+  <data name="StartNewNote" xml:space="preserve">
+    <value>New note</value>
+  </data>
+  <data name="StartNewNoteText" xml:space="preserve">
+    <value>A blank Markdown document</value>
+  </data>
+  <data name="StartOpenFile" xml:space="preserve">
+    <value>Open a file</value>
+  </data>
+  <data name="StartOpenFileText" xml:space="preserve">
+    <value>Markdown files on this PC</value>
+  </data>
+  <data name="StartPageRecent" xml:space="preserve">
+    <value>Recent files</value>
+  </data>
+  <data name="UseTabsToggle" xml:space="preserve">
+    <value>Open documents in tabs</value>
+  </data>
+  <data name="RestoreTabsToggle" xml:space="preserve">
+    <value>Reopen your documents when Caret starts</value>
+  </data>
+  <data name="NavCreateHeader" xml:space="preserve">
+    <value>Create</value>
+  </data>
+  <data name="NavLibraryHeader" xml:space="preserve">
+    <value>Library</value>
+  </data>
+  <data name="OutlineHeader" xml:space="preserve">
+    <value>Outline</value>
+  </data>
+  <data name="FavoriteMenuItem" xml:space="preserve">
+    <value>Favorite</value>
+  </data>
+  <data name="ThemeMenu" xml:space="preserve">
+    <value>Theme</value>
+  </data>
+  <data name="SettingsGeneral" xml:space="preserve">
+    <value>General</value>
+  </data>
+  <data name="SettingsAppearance" xml:space="preserve">
+    <value>Appearance</value>
+  </data>
+  <data name="SettingsLayout" xml:space="preserve">
+    <value>Layout</value>
+  </data>
+  <data name="SettingsEditor" xml:space="preserve">
+    <value>Editor</value>
+  </data>
+  <data name="SettingsTabsWindows" xml:space="preserve">
+    <value>Tabs and windows</value>
+  </data>
+  <data name="SettingsConvert" xml:space="preserve">
+    <value>Convert</value>
+  </data>
+  <data name="SettingsImages" xml:space="preserve">
+    <value>Images</value>
+  </data>
+  <data name="SettingsKeyboard" xml:space="preserve">
+    <value>Keyboard</value>
+  </data>
+  <data name="SearchSettings" xml:space="preserve">
+    <value>Search settings</value>
+  </data>
+  <data name="SettingsNoResults" xml:space="preserve">
+    <value>No settings found</value>
+  </data>
+  <data name="OnStartupHeader" xml:space="preserve">
+    <value>On startup</value>
+  </data>
+  <data name="ThemeDescription" xml:space="preserve">
+    <value>Light, dark, or the same as Windows</value>
+  </data>
+  <data name="ColorScheme" xml:space="preserve">
+    <value>Color scheme</value>
+  </data>
+  <data name="ColorSchemeDescription" xml:space="preserve">
+    <value>Colors for the whole window. Use the arrow keys to try each one.</value>
+  </data>
+  <data name="SchemeCopper" xml:space="preserve">
+    <value>Copper</value>
+  </data>
+  <data name="SchemePaper" xml:space="preserve">
+    <value>Paper</value>
+  </data>
+  <data name="SchemeSage" xml:space="preserve">
+    <value>Sage</value>
+  </data>
+  <data name="SchemeHarbour" xml:space="preserve">
+    <value>Harbor</value>
+  </data>
+  <data name="SchemeGraphite" xml:space="preserve">
+    <value>Graphite</value>
+  </data>
+  <data name="AccentColor" xml:space="preserve">
+    <value>Accent color</value>
+  </data>
+  <data name="AccentColorDescription" xml:space="preserve">
+    <value>Buttons, switches, selection and links</value>
+  </data>
+  <data name="AccentScheme" xml:space="preserve">
+    <value>From the color scheme</value>
+  </data>
+  <data name="AccentWindows" xml:space="preserve">
+    <value>Windows accent color</value>
+  </data>
+  <data name="WindowMaterial" xml:space="preserve">
+    <value>Window material</value>
+  </data>
+  <data name="WindowMaterialDescription" xml:space="preserve">
+    <value>Mica lets your desktop tint the window's frame. The page stays solid.</value>
+  </data>
+  <data name="WindowMaterialUnsupported" xml:space="preserve">
+    <value>Mica needs Windows 11.</value>
+  </data>
+  <data name="MaterialSolid" xml:space="preserve">
+    <value>Solid</value>
+  </data>
+  <data name="ContrastThemeActive" xml:space="preserve">
+    <value>A contrast theme is on in Windows, so Caret uses its colors. The color scheme and accent come back when it's off.</value>
+  </data>
+  <data name="DecorativeCard" xml:space="preserve">
+    <value>Sidebar illustration</value>
+  </data>
+  <data name="DecorativeCardDescription" xml:space="preserve">
+    <value>The illustrated card at the bottom of the sidebar. It's hidden in a short window anyway.</value>
+  </data>
+  <data name="PageWidth" xml:space="preserve">
+    <value>Page width</value>
+  </data>
+  <data name="PageWidthDescription" xml:space="preserve">
+    <value>How wide the text column can grow</value>
+  </data>
+  <data name="PageWidthNarrow" xml:space="preserve">
+    <value>Narrow (720 px)</value>
+  </data>
+  <data name="PageWidthMedium" xml:space="preserve">
+    <value>Medium (900 px)</value>
+  </data>
+  <data name="PageWidthWide" xml:space="preserve">
+    <value>Wide (1200 px)</value>
+  </data>
+  <data name="PageWidthFull" xml:space="preserve">
+    <value>Full window</value>
+  </data>
+  <data name="PageWidthCustom" xml:space="preserve">
+    <value>Custom</value>
+  </data>
+  <data name="TypewriterToggle" xml:space="preserve">
+    <value>Typewriter mode</value>
+  </data>
+  <data name="TypewriterToggleDescription" xml:space="preserve">
+    <value>Keeps the line you're typing in the middle of the window</value>
+  </data>
+  <data name="FocusModeToggle" xml:space="preserve">
+    <value>Focus mode</value>
+  </data>
+  <data name="FocusModeToggleDescription" xml:space="preserve">
+    <value>Dims every paragraph except the one you're writing</value>
+  </data>
+  <data name="ConvertSettingsDescription" xml:space="preserve">
+    <value>The output folder, images and personal-data masking are set on the Convert page.</value>
+  </data>
+  <data name="OpenConvertPage" xml:space="preserve">
+    <value>Open the Convert page</value>
+  </data>
+  <data name="NextPreviousTab" xml:space="preserve">
+    <value>Next / previous tab</value>
+  </data>
+  <data name="ViewModeMenu" xml:space="preserve">
+    <value>View / Code / Split</value>
+  </data>
+  <data name="Back" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="StartPagePinnedRecent" xml:space="preserve">
+    <value>Favorites and recent files</value>
+  </data>
+  <data name="Yesterday" xml:space="preserve">
+    <value>Yesterday</value>
+  </data>
+  <data name="WindowLayout" xml:space="preserve">
+    <value>Window layout</value>
+  </data>
+  <data name="WindowLayoutDescription" xml:space="preserve">
+    <value>Classic keeps the menu and the toolbar on separate rows. Streamlined puts them on one. Distraction-free hides them until you need them (F11).</value>
+  </data>
+  <data name="LayoutClassic" xml:space="preserve">
+    <value>Classic</value>
+  </data>
+  <data name="LayoutStreamlined" xml:space="preserve">
+    <value>Streamlined</value>
+  </data>
+  <data name="LayoutDistraction" xml:space="preserve">
+    <value>Distraction-free</value>
+  </data>
+  <data name="Density" xml:space="preserve">
+    <value>Density</value>
+  </data>
+  <data name="DensityDescription" xml:space="preserve">
+    <value>Compact fits more on screen. Applies the next time Caret starts.</value>
+  </data>
+  <data name="DensityStandard" xml:space="preserve">
+    <value>Standard</value>
+  </data>
+  <data name="DensityCompact" xml:space="preserve">
+    <value>Compact</value>
+  </data>
+  <data name="SidebarPosition" xml:space="preserve">
+    <value>Sidebar position</value>
+  </data>
+  <data name="SideLeft" xml:space="preserve">
+    <value>Left</value>
+  </data>
+  <data name="SideRight" xml:space="preserve">
+    <value>Right</value>
+  </data>
+  <data name="SidebarRail" xml:space="preserve">
+    <value>Narrow sidebar</value>
+  </data>
+  <data name="SidebarRailDescription" xml:space="preserve">
+    <value>Icons only. Choosing a list widens it again.</value>
+  </data>
+  <data name="ExpandSidebar" xml:space="preserve">
+    <value>Widen the sidebar</value>
+  </data>
+  <data name="CollapseSidebar" xml:space="preserve">
+    <value>Narrow the sidebar</value>
+  </data>
+  <data name="MoveBetweenAreas" xml:space="preserve">
+    <value>Move between areas of the window</value>
+  </data>
+  <data name="HeadingMenu" xml:space="preserve">
+    <value>Heading</value>
+  </data>
+  <data name="FormattingToolbar" xml:space="preserve">
+    <value>Formatting</value>
+  </data>
+  <data name="AccessKeyFile" xml:space="preserve">
+    <value>F</value>
+  </data>
+  <data name="AccessKeyEdit" xml:space="preserve">
+    <value>E</value>
+  </data>
+  <data name="AccessKeyParagraph" xml:space="preserve">
+    <value>P</value>
+  </data>
+  <data name="AccessKeyFormat" xml:space="preserve">
+    <value>O</value>
+  </data>
+  <data name="AccessKeyView" xml:space="preserve">
+    <value>V</value>
+  </data>
+  <data name="SectionColors" xml:space="preserve">
+    <value>Section colors</value>
+  </data>
+  <data name="SectionColorsDescription" xml:space="preserve">
+    <value>Change one area at a time. Colors that would be hard to read aren't offered.</value>
+  </data>
+  <data name="SectionBand" xml:space="preserve">
+    <value>Title bar and tabs</value>
+  </data>
+  <data name="SectionSidebar" xml:space="preserve">
+    <value>Sidebar</value>
+  </data>
+  <data name="SectionPage" xml:space="preserve">
+    <value>Editor page</value>
+  </data>
+  <data name="SectionStatus" xml:space="preserve">
+    <value>Status bar</value>
+  </data>
+  <data name="SwatchDefault" xml:space="preserve">
+    <value>From the color scheme</value>
+  </data>
+  <data name="SwatchWarmSand" xml:space="preserve">
+    <value>Warm sand</value>
+  </data>
+  <data name="SwatchMist" xml:space="preserve">
+    <value>Mist</value>
+  </data>
+  <data name="SwatchStone" xml:space="preserve">
+    <value>Stone</value>
+  </data>
+  <data name="SwatchLavender" xml:space="preserve">
+    <value>Lavender</value>
+  </data>
+  <data name="SwatchEspresso" xml:space="preserve">
+    <value>Espresso</value>
+  </data>
+  <data name="SwatchUmber" xml:space="preserve">
+    <value>Umber</value>
+  </data>
+  <data name="SwatchMoss" xml:space="preserve">
+    <value>Moss</value>
+  </data>
+  <data name="SwatchNight" xml:space="preserve">
+    <value>Night</value>
+  </data>
+  <data name="SwatchCharcoal" xml:space="preserve">
+    <value>Charcoal</value>
+  </data>
+  <data name="SwatchPlum" xml:space="preserve">
+    <value>Plum</value>
+  </data>
+  <data name="TooLittleContrast" xml:space="preserve">
+    <value>Too little contrast</value>
+  </data>
+  <data name="TabColorMenu" xml:space="preserve">
+    <value>Tab color</value>
+  </data>
+  <data name="ColorNone" xml:space="preserve">
+    <value>None</value>
+  </data>
+  <data name="ColorRed" xml:space="preserve">
+    <value>Red</value>
+  </data>
+  <data name="ColorOrange" xml:space="preserve">
+    <value>Orange</value>
+  </data>
+  <data name="ColorYellow" xml:space="preserve">
+    <value>Yellow</value>
+  </data>
+  <data name="ColorGreen" xml:space="preserve">
+    <value>Green</value>
+  </data>
+  <data name="ColorTeal" xml:space="preserve">
+    <value>Teal</value>
+  </data>
+  <data name="ColorBlue" xml:space="preserve">
+    <value>Blue</value>
+  </data>
+  <data name="ColorPurple" xml:space="preserve">
+    <value>Purple</value>
+  </data>
+  <data name="ColorPink" xml:space="preserve">
+    <value>Pink</value>
+  </data>
   <data name="ConvertMarkItDownNotReady" xml:space="preserve">
     <value>Not converted: MarkItDown isn't set up yet. See Converter above.</value>
   </data>
@@ -1180,11 +1595,5 @@ If Python is installed somewhere else, choose its python.exe. Otherwise install 
   </data>
   <data name="PortableUpdatesNote" xml:space="preserve">
     <value>This is the portable version: to update, replace the folder with a newer one. Your settings are in the Data folder next to Caret.exe.</value>
-  </data>
-  <data name="StatusLegacyEncoding" xml:space="preserve">
-    <value>Markdown · {0}</value>
-  </data>
-  <data name="StatusLegacyEncodingTip" xml:space="preserve">
-    <value>This file isn't saved as UTF-8, so Caret read it with Windows' {0} encoding. Saving it converts it to UTF-8, which every Markdown tool expects.</value>
   </data>
 </root>

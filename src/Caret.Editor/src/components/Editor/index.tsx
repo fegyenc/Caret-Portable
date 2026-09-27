@@ -13,6 +13,13 @@ import { getHtmlToc, getTOC } from "services/common";
 const Editor: React.FC = () => {
     const [markdown, setMarkdown] = useState<string>();
     const markdownRef = useRef<string>();
+    // The text as of the latest edit, set as the edit happens: `markdown` only reaches the host
+    // (MarkdownChange) after React's next render. Flush reads it, see below.
+    const latestRef = useRef<string>();
+    const onMarkdownChange = useCallback((text: string) => {
+        latestRef.current = text
+        setMarkdown(text)
+    }, [])
     const [cursor, setCursor] = useState<any>();
     const [options, setOptions] = useState<any>();
     const optionsRef = useRef<any>();
@@ -29,6 +36,7 @@ const Editor: React.FC = () => {
             setOptions(opt)
             setMarkdown(markdown)
             markdownRef.current = markdown
+            latestRef.current = markdown
             OnFileLoaded();
         })
     }, [OnFileLoaded]);
@@ -60,14 +68,15 @@ const Editor: React.FC = () => {
     }), []);
 
     useEffect(() => transport.addListener<{ type: string, text: string }>('ImportFile', ({ text }) => {
-        setMarkdown(htmlToMarkdown(text, [], DEFAULT_TURNDOWN_CONFIG))
-    }), [options]);
+        onMarkdownChange(htmlToMarkdown(text, [], DEFAULT_TURNDOWN_CONFIG))
+    }), [options, onMarkdownChange]);
 
     useEffect(() => transport.addListener<{ text: string, basePath: string }>('LoadFile', ({ text, basePath }) => {
         window.basePath = basePath
         setCursor(undefined)
         setMarkdown(text)
         markdownRef.current = text
+        latestRef.current = text
         OnFileLoaded();
     }), [OnFileLoaded]);
 
@@ -76,6 +85,13 @@ const Editor: React.FC = () => {
         setCursor(cursor)
         setTimeout(() => setMarkdown(text))
         markdownRef.current = text
+        latestRef.current = text
+    }), []);
+
+    // Before the host switches tabs: answers with the text as of the latest edit. Messages arrive in
+    // order, so every MarkdownChange sent before this answer has reached the host by then too.
+    useEffect(() => transport.addListener<{ id: string }>('Flush', ({ id }) => {
+        transport.postMessageNoDiff('Flushed', { id, text: latestRef.current })
     }), []);
 
     useEffect(() => transport.addListener<Record<string, unknown>>('SettingsChanged', (newOptions) => {
@@ -104,7 +120,7 @@ const Editor: React.FC = () => {
                 searchOpen={searchOpen}
                 searchArg={searchArg}
                 scrollTopRef={codeMirrorScrollRef}
-                onMarkdownChange={setMarkdown}
+                onMarkdownChange={onMarkdownChange}
                 onCursorChange={setCursor}
                 onSearchArgChange={setSearchArg}
             />
@@ -125,7 +141,7 @@ const Editor: React.FC = () => {
                 searchOpen={searchOpen}
                 searchArg={searchArg}
                 scrollTopRef={muyaScrollTopRef}
-                onMarkdownChange={setMarkdown}
+                onMarkdownChange={onMarkdownChange}
                 onCursorChange={setCursor}
                 onSearchArgChange={setSearchArg}
             />
