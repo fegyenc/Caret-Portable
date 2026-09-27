@@ -33,7 +33,7 @@ namespace Typedown.WinUI.Services.MarkItDown
 
         // A folder called "python" next to Caret.exe (for example an extracted "embeddable" Python
         // with MarkItDown installed into it), so a team can hand out one folder with everything in it.
-        public static string BundledPythonPath => Path.Combine(AppContext.BaseDirectory, "python", "python.exe");
+        public static string BundledPythonPath => Path.Combine(Config.PortableRoot, "python", "python.exe");
 
         // The chosen python.exe (the user's pick wins) that can import markitdown; otherwise the first
         // working Python without it, so the UI can say "install MarkItDown" instead of "install Python";

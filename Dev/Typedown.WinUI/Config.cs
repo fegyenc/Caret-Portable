@@ -47,9 +47,9 @@ namespace Typedown.WinUI
 
         // Where settings, recent files, favorites, templates, crash-recovery backups and WebView2's
         // cache live. The installed (MSIX) app uses its package folder. The portable build keeps
-        // everything in a "Data" folder next to Caret.exe, so the whole app is one folder that can be
-        // copied, moved or deleted, and nothing is left in the user profile. When that folder can't be
-        // written (a read-only network share, Program Files), it falls back to
+        // everything in a "Data" folder next to Caret.exe (see PortableRoot), so the whole app is one
+        // folder that can be copied, moved or deleted, and nothing is left in the user profile. When
+        // that folder can't be written (a read-only network share, Program Files), it falls back to
         // %LOCALAPPDATA%\Caret Portable.
         public static string GetLocalFolderPath() => localFolderPath ??= FindLocalFolderPath();
 
@@ -64,11 +64,27 @@ namespace Typedown.WinUI
             catch (Exception)
             {
             }
-            var portable = Path.Combine(AppContext.BaseDirectory, "Data");
+            var portable = Path.Combine(PortableRoot, "Data");
             if (IsWritableFolder(portable)) return portable;
             var fallback = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), AppName + " Portable");
             Directory.CreateDirectory(fallback);
             return fallback;
+        }
+
+        // The folder the user sees. The portable zip keeps the app's files in an "app" subfolder,
+        // started by a small Caret.exe launcher one level up (Dev/Caret.Launcher); Data and an
+        // optional python folder sit next to that launcher. A plain build output (no launcher)
+        // is its own root.
+        public static string PortableRoot { get; } = FindPortableRoot();
+
+        private static string FindPortableRoot()
+        {
+            var appDir = AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            var parent = Path.GetDirectoryName(appDir);
+            return string.Equals(Path.GetFileName(appDir), "app", StringComparison.OrdinalIgnoreCase)
+                && parent != null && File.Exists(Path.Combine(parent, AppName + ".exe"))
+                ? parent
+                : appDir;
         }
 
         private static bool IsWritableFolder(string path)

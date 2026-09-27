@@ -43,21 +43,9 @@ jobs:
 
       - uses: microsoft/setup-msbuild@v2
 
-      - name: Publish the portable app
-        run: >
-          msbuild Dev\Typedown.WinUI\Typedown.WinUI.csproj -restore -t:Publish -m
-          -p:Configuration=Release -p:Platform=${{ matrix.platform }}
-          -p:PublishDir="${{ env.PUBLISH_DIR }}"
-
-      - name: Add the read-me
+      - name: Build the portable folder
         shell: pwsh
-        run: |
-          Copy-Item PORTABLE.md "$env:PUBLISH_DIR\README.md"
-          if (-not (Test-Path "$env:PUBLISH_DIR\Caret.exe")) { throw "Caret.exe is missing from the publish folder" }
-          if (-not (Test-Path "$env:PUBLISH_DIR\Resources\Statics\index.html")) { throw "The editor bundle is missing from the publish folder" }
-          if (-not (Test-Path "$env:PUBLISH_DIR\Strings\en\AppResources.resw")) { throw "The UI strings are missing from the publish folder" }
-          $size = (Get-ChildItem $env:PUBLISH_DIR -Recurse | Measure-Object Length -Sum).Sum / 1MB
-          "Publish folder: {0:N0} MB, {1} files" -f $size, (Get-ChildItem $env:PUBLISH_DIR -Recurse -File).Count
+        run: ./build/package.ps1 -Platform ${{ matrix.platform }}
 
       # Starts the app the way a user would (double-click, no install) and checks that it gets as far as
       # loading the editor, from a copy in a fresh folder so nothing from the build output helps it.
@@ -66,24 +54,31 @@ jobs:
         shell: pwsh
         run: |
           $dir = Join-Path $env:RUNNER_TEMP 'smoke\Caret-Portable'
+          New-Item -ItemType Directory (Split-Path $dir) -Force | Out-Null
           Copy-Item $env:PUBLISH_DIR $dir -Recurse
           $log = Join-Path $env:TEMP 'caret_winui_probe.log'
           Remove-Item $log -ErrorAction SilentlyContinue
-          $p = Start-Process (Join-Path $dir 'Caret.exe') -PassThru
+          # The top-level Caret.exe is the launcher: it starts app\Caret.exe and exits.
+          # (Not -Wait: in PowerShell 7 that also waits for the app the launcher starts.)
+          $launcher = Start-Process (Join-Path $dir 'Caret.exe') -PassThru
+          if (-not $launcher.WaitForExit(30000)) { throw 'The launcher did not exit' }
+          if ($launcher.ExitCode -ne 0) { throw "The launcher failed (exit code $($launcher.ExitCode))" }
+          $appExe = Join-Path $dir 'app\Caret.exe'
           $ok = $false
-          for ($i = 0; $i -lt 60 -and -not $p.HasExited; $i++) {
+          for ($i = 0; $i -lt 60; $i++) {
             Start-Sleep -Seconds 1
             if ((Test-Path $log) -and (Select-String -Path $log -Pattern 'CoreWebView2 initialized OK' -Quiet)) { $ok = $true; break }
           }
-          if (Test-Path $log) { Get-Content $log | Select-Object -First 40 }
-          if ($p.HasExited) { throw "Caret exited on its own (exit code $($p.ExitCode))" }
-          Stop-Process -Id $p.Id -Force
+          if (Test-Path $log) { Get-Content $log | Select-Object -First 12 }
+          $app = Get-Process -Name Caret -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $appExe }
+          if (-not $app) { throw 'app\Caret.exe is not running: the launcher did not start it, or it exited on its own' }
+          $app | Stop-Process -Force
           if (-not $ok) { throw 'Caret started but the editor never finished loading' }
-          'Top of the app folder:'; Get-ChildItem $dir -Directory | Select-Object -ExpandProperty Name
-          if (Test-Path (Join-Path $dir 'Data')) { 'Data folder:'; Get-ChildItem (Join-Path $dir 'Data') | Select-Object -ExpandProperty Name }
-          if (-not (Test-Path (Join-Path $dir 'Data\Settings.json')) -and -not (Test-Path (Join-Path $dir 'Data\WebView2'))) { throw 'Caret did not keep its data in the Data folder next to Caret.exe' }
-          if (-not (Test-Path (Join-Path $dir 'Data\WebView2'))) { throw 'The WebView2 profile is not in the Data folder (see "WebView2 profile" in the log above)' }
-          'Caret started from a plain folder and loaded the editor.'
+          'Top level: ' + ((Get-ChildItem $dir | ForEach-Object Name) -join ', ')
+          'Data: ' + ((Get-ChildItem (Join-Path $dir 'Data') -ErrorAction SilentlyContinue | ForEach-Object Name) -join ', ')
+          if (-not (Test-Path (Join-Path $dir 'Data\WebView2'))) { throw 'The WebView2 profile is not in the Data folder next to Caret.exe (see "WebView2 profile" in the log above)' }
+          if (Test-Path (Join-Path $dir 'app\Data')) { throw 'Caret put its Data folder inside app instead of next to the launcher' }
+          'Caret started from a plain folder through the launcher and loaded the editor.'
 
       - name: Zip
         shell: pwsh

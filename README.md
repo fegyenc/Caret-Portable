@@ -100,18 +100,20 @@ cd Dev\Typedown.Editor
 yarn install
 yarn build          # editor bundle -> Dev\Typedown.WinUI\Resources\Statics
 cd ..\..
-msbuild Dev\Typedown.WinUI\Typedown.WinUI.csproj -restore -t:Publish -p:Configuration=Release -p:Platform=x64 -p:PublishDir=$PWD\out\Caret-Portable
+./build/package.ps1 -Platform x64   # from a Developer PowerShell for VS 2022
 ```
 
-`out\Caret-Portable` is the portable folder. For everyday development, open `Caret.sln` and run `Debug_Local` (x64).
+`out\Caret-Portable` is the portable folder: the `Caret.exe` launcher, `README.md` and `app\` (the self-contained app, trimmed to the English, French and Spanish Windows App SDK resources). For everyday development, open `Caret.sln` and run `Debug_Local` (x64).
 
-The [Portable build](.github/workflows/portable.yml) workflow does the same on `windows-latest` for x64 and ARM64. It also starts the x64 build from a fresh folder to check that the editor loads, then uploads the zips. Pushing a `v*` tag attaches them to a release.
+The [Portable build](.github/workflows/portable.yml) workflow does the same on `windows-latest` for x64 and ARM64. It also starts the x64 build through the launcher from a fresh folder to check that the editor loads and that `Data\` lands next to the launcher, then uploads the zips. Pushing a `v*` tag attaches them to a release.
 
 ## Project layout
 
 | Path | What it is |
 | --- | --- |
 | `Dev/Typedown.WinUI` | The app: WinUI 3 + WebView2 on .NET 8. |
+| `Dev/Caret.Launcher` | The small `Caret.exe` at the top of the portable folder (.NET Framework 4.8, part of Windows) that starts `app\Caret.exe`. |
+| `build/package.ps1` | Builds the portable folder. |
 | `Dev/Typedown.WinUI/Services/MarkItDown` | Finding Python (`PythonLocator`), running MarkItDown in a worker process (`MarkItDownWorker`), supported formats. |
 | `Dev/Typedown.WinUI/MainWindow.Convert.cs` | The Convert to Markdown page: files, folders, output naming. |
 | `Dev/Typedown.WinUI/MainWindow.MarkItDown.cs` | The Converter panel: detection, choosing python.exe, installing MarkItDown, File → Import. |

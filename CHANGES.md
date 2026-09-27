@@ -8,6 +8,7 @@ Caret Portable was split off from [Caret](https://github.com/fegyenc/Caret) (com
 - **No PATH or registry changes.** The old MarkItDown installer added pip's Scripts folder to the user PATH. Now MarkItDown is always started as `python -c …` with the full path to python.exe, and installing it is just `pip install --user` into that Python.
 - **Data next to the exe.** Settings, recent files, favorites, templates, backups and the WebView2 profile go to `Data\` beside `Caret.exe`. If that folder isn't writable, they go to `%LOCALAPPDATA%\Caret Portable`.
 - **No update check.** The settings panel for it is hidden; updating means replacing the folder.
+- **A tidy folder.** The app lives in `app\`, started by a small launcher `Caret.exe` (`Dev/Caret.Launcher`, .NET Framework 4.8). `Data\` and an optional `python\` go next to the launcher (`Config.PortableRoot`). `build/package.ps1` assembles the folder and drops the Windows App SDK's resource folders for languages other than English, French and Spanish (about 80).
 - **Separate single-instance key**, so the portable app doesn't hand its launch over to an installed Caret.
 - **CI**: `.github/workflows/portable.yml` builds x64 and ARM64 zips on `windows-latest`, starts the x64 build from a fresh folder to check that the editor loads, and attaches the zips to a release when a `v*` tag is pushed.
 

@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<!-- The Caret.exe at the top of the portable folder. It only starts app\Caret.exe, so the folder a
+	     user unzips shows Caret.exe, README.md, app and Data instead of hundreds of runtime files.
+	     .NET Framework 4.8 is part of every supported Windows 10 and 11, so this needs nothing
+	     installed and stays a few kilobytes. -->
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net48</TargetFramework>
+		<AssemblyName>Caret</AssemblyName>
+		<RootNamespace>Caret.Launcher</RootNamespace>
+		<ApplicationIcon>..\Typedown.WinUI\Assets\logo.ico</ApplicationIcon>
+		<LangVersion>latest</LangVersion>
+		<Nullable>disable</Nullable>
+		<Product>Caret Portable</Product>
+		<Version>1.0.0</Version>
+		<DebugType>none</DebugType>
+		<GenerateSupportedRuntime>false</GenerateSupportedRuntime>
+	</PropertyGroup>
+
+</Project>

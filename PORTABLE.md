@@ -4,6 +4,14 @@ Convert Word, Excel, PowerPoint, PDF, Outlook and other files to Markdown with *
 
 **Nothing to install.** Unzip the folder anywhere you can write to (your Documents, Desktop or a USB drive) and double-click **Caret.exe**. You don't need administrator rights, Caret doesn't add itself to PATH, and it doesn't touch the registry.
 
+```
+Caret-Portable\
+  Caret.exe    ← double-click this
+  README.md    this guide
+  app\         the program files (leave them alone)
+  Data\        your settings, created the first time Caret runs
+```
+
 ## What you need
 
 | | |
@@ -73,7 +81,7 @@ The [Windows embeddable package](https://www.python.org/downloads/windows/) is o
 
 ## If Caret won't start
 
-- **Nothing happens, or "This app has been blocked by your system administrator".** Your company's application control (AppLocker or Windows Defender Application Control) doesn't allow programs to run from your user folders. Ask IT to allow `Caret.exe`, or to put the folder somewhere that's allowed.
+- **Nothing happens, or "This app has been blocked by your system administrator".** Your company's application control (AppLocker or Windows Defender Application Control) doesn't allow programs to run from your user folders. Ask IT to allow `Caret.exe` and `app\Caret.exe`, or to put the folder somewhere that's allowed.
 - **"WebView2 Runtime" message.** Ask IT to install the Microsoft Edge WebView2 Runtime (Evergreen). It's a standard Microsoft component.
 
 A diagnostic log is written to `%TEMP%\caret_winui_probe.log`.
