@@ -19,7 +19,7 @@
 		<SelfContained>false</SelfContained>
 		<AssemblyName>Caret</AssemblyName>
 		<Product>Caret Portable</Product>
-		<Version>1.0.0</Version>
+		<Version>1.0.1</Version>
 		<Nullable>disable</Nullable>
 		<Configurations>Debug;Release;Debug_Local</Configurations>
 		<!-- Turns off the WinUI 3 SDK-generated Program/Main (see the #if in the generated App.g.i.cs)
