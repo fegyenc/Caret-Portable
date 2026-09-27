@@ -100,11 +100,24 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
+      # The release text is this version's section of CHANGELOG.md ("## 1.0.1" for tag v1.0.1).
+      - name: Release notes
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          awk -v h="## $version" '$0 == h {on = 1; next} /^## / {on = 0} on' CHANGELOG.md > notes.md
+          if ! grep -q '[^[:space:]]' notes.md; then echo "CHANGELOG.md has no '## $version' section"; exit 1; fi
+          cat >> notes.md <<'NOTES'
+
+          **Download** the zip for your PC (x64 for most, ARM64 for Windows on ARM), unzip it anywhere you can write to, and double-click `Caret.exe`. Needs Python 3.10+ with MarkItDown; see the README inside the zip.
+          NOTES
+          cat notes.md
       - uses: actions/download-artifact@v4
         with:
           path: dist
           merge-multiple: true
       - uses: softprops/action-gh-release@v2
         with:
+          name: Caret Portable ${{ github.ref_name }}
+          body_path: notes.md
           files: dist/*.zip
-          generate_release_notes: true
