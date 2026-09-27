@@ -6,6 +6,11 @@ on:
     tags: ['v*']
   pull_request:
   workflow_dispatch:
+    inputs:
+      release:
+        description: 'Version to publish as a release, e.g. 1.0.1 (creates the tag v1.0.1). Leave empty for a plain build.'
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -94,7 +99,8 @@ jobs:
 
   release:
     name: Release
-    if: startsWith(github.ref, 'refs/tags/v')
+    # A pushed v* tag, or Run workflow with a version (which creates the tag on the commit it built).
+    if: startsWith(github.ref, 'refs/tags/v') || inputs.release != ''
     needs: build
     runs-on: ubuntu-latest
     permissions:
@@ -103,8 +109,14 @@ jobs:
       - uses: actions/checkout@v4
       # The release text is this version's section of CHANGELOG.md ("## 1.0.1" for tag v1.0.1).
       - name: Release notes
+        id: notes
+        env:
+          REQUESTED: ${{ inputs.release }}
         run: |
-          version="${GITHUB_REF_NAME#v}"
+          if [ -n "$REQUESTED" ]; then version="${REQUESTED#v}"; else version="${GITHUB_REF_NAME#v}"; fi
+          project=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' src/Caret.App/Caret.App.csproj | head -1)
+          if [ "$version" != "$project" ]; then echo "Asked to release $version, but src/Caret.App/Caret.App.csproj says $project"; exit 1; fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
           awk -v h="## $version" '$0 == h {on = 1; next} /^## / {on = 0} on' CHANGELOG.md > notes.md
           if ! grep -q '[^[:space:]]' notes.md; then echo "CHANGELOG.md has no '## $version' section"; exit 1; fi
           cat >> notes.md <<'NOTES'
@@ -118,6 +130,8 @@ jobs:
           merge-multiple: true
       - uses: softprops/action-gh-release@v2
         with:
-          name: Caret Portable ${{ github.ref_name }}
+          tag_name: v${{ steps.notes.outputs.version }}
+          target_commitish: ${{ github.sha }}
+          name: Caret Portable ${{ steps.notes.outputs.version }}
           body_path: notes.md
           files: dist/*.zip

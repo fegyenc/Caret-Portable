@@ -105,7 +105,7 @@ cd ..\..
 
 `out\Caret-Portable` is the portable folder: the `Caret.exe` launcher, `README.md` and `app\` (the self-contained app, trimmed to the English, French and Spanish Windows App SDK resources). For everyday development, open `Caret.sln` and run `Debug_Local` (x64).
 
-The [Portable build](.github/workflows/portable.yml) workflow does the same on `windows-latest` for x64 and ARM64. It also starts the x64 build through the launcher from a fresh folder to check that the editor loads and that `Data\` lands next to the launcher, then uploads the zips. Pushing a `v*` tag attaches them to a release.
+The [Portable build](.github/workflows/portable.yml) workflow does the same on `windows-latest` for x64 and ARM64. It also starts the x64 build through the launcher from a fresh folder to check that the editor loads and that `Data\` lands next to the launcher, then uploads the zips. To publish a release, open the workflow under **Actions → Portable build → Run workflow** and enter the version (it must match `<Version>` in `src/Caret.App/Caret.App.csproj` and have a section in `CHANGELOG.md`). That creates the `v<version>` tag and a release with both zips. Pushing a `v*` tag does the same.
 
 ## Repository layout
 
