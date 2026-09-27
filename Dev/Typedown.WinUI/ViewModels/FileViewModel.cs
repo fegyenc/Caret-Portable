@@ -41,6 +41,10 @@ namespace Typedown.WinUI.ViewModels
 
         public string Markdown { get; private set; } = "";
 
+        // Set when the open file wasn't UTF-8 and was read in Windows' legacy code page instead
+        // (Utilities/TextFileEncoding.cs), e.g. "Windows-1250". Saving writes UTF-8, which clears it.
+        public string LegacyEncodingName { get; private set; }
+
         public bool IsDirty => Markdown != savedSnapshot;
 
         public string ImageBasePath => string.IsNullOrEmpty(FilePath) ? settings.DefaultImageBasePath : Path.GetDirectoryName(FilePath);
@@ -78,7 +82,9 @@ namespace Typedown.WinUI.ViewModels
             {
                 try
                 {
-                    Markdown = await File.ReadAllTextAsync(path);
+                    var read = await TextFileEncoding.ReadAsync(path);
+                    Markdown = read.Text;
+                    LegacyEncodingName = read.LegacyName;
                     FilePath = path;
                 }
                 catch
@@ -95,6 +101,7 @@ namespace Typedown.WinUI.ViewModels
         public void NewFile()
         {
             FilePath = null;
+            LegacyEncodingName = null;
             Markdown = "";
             savedSnapshot = Markdown;
             pendingLoadIsClean = true;
@@ -105,7 +112,9 @@ namespace Typedown.WinUI.ViewModels
         public async Task OpenFile(string path)
         {
             if (!File.Exists(path)) return;
-            Markdown = await File.ReadAllTextAsync(path);
+            var read = await TextFileEncoding.ReadAsync(path);
+            Markdown = read.Text;
+            LegacyEncodingName = read.LegacyName;
             savedSnapshot = Markdown;
             FilePath = path;
             pendingLoadIsClean = true;
@@ -128,6 +137,7 @@ namespace Typedown.WinUI.ViewModels
         {
             if (string.IsNullOrEmpty(FilePath)) return false;
             await File.WriteAllTextAsync(FilePath, Markdown);
+            LegacyEncodingName = null; // written as UTF-8 now
             savedSnapshot = Markdown;
             // The document is now safely on disk for real — any recovery backup for it is obsolete.
             AutoBackup.DeleteBackup(FilePath);
@@ -143,6 +153,7 @@ namespace Typedown.WinUI.ViewModels
             // deleting under the *old* FilePath before reassigning it.
             AutoBackup.DeleteBackup(FilePath);
             FilePath = path;
+            LegacyEncodingName = null;
             savedSnapshot = Markdown;
             FileStateChanged?.Invoke();
         }

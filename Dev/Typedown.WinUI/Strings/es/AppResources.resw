@@ -1229,4 +1229,10 @@ Si Python está instalado en otro lugar, elige su python.exe. Si no, instala Pyt
   <data name="PortableUpdatesNote" xml:space="preserve">
     <value>Esta es la versión portátil: para actualizarla, sustituye la carpeta por una más reciente. Tu configuración está en la carpeta Data, junto a Caret.exe.</value>
   </data>
+  <data name="StatusLegacyEncoding" xml:space="preserve">
+    <value>Markdown · {0}</value>
+  </data>
+  <data name="StatusLegacyEncodingTip" xml:space="preserve">
+    <value>Este archivo no está guardado en UTF-8, así que Caret lo ha leído con la codificación {0} de Windows. Al guardarlo se convierte a UTF-8, el formato que esperan todas las herramientas de Markdown.</value>
+  </data>
 </root>

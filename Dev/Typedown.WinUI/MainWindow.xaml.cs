@@ -261,6 +261,16 @@ namespace Typedown.WinUI
             TitleTextBlock.Text = dirtyMark + file.DisplayName + " - Caret";
             Title = TitleTextBlock.Text;
             UpdateFavoriteButton();
+            UpdateEncodingStatus();
+        }
+
+        // Status bar: "Markdown", or — for a file that wasn't UTF-8 and was read in Windows' legacy
+        // code page (Utilities/TextFileEncoding.cs) — which encoding, and that saving converts it.
+        private void UpdateEncodingStatus()
+        {
+            var legacy = file.LegacyEncodingName;
+            StatusBarFormatText.Text = legacy == null ? Locale.GetString("Markdown") : Locale.Format("StatusLegacyEncoding", legacy);
+            ToolTipService.SetToolTip(StatusBarFormatText, legacy == null ? null : Locale.Format("StatusLegacyEncodingTip", legacy));
         }
 
         private void UpdateFavoriteButton()
@@ -1285,7 +1295,7 @@ namespace Typedown.WinUI
             if (!await ConfirmDiscardChangesIfNeeded()) return;
             try
             {
-                var content = await File.ReadAllTextAsync(entry.FullPath);
+                var content = (await TextFileEncoding.ReadAsync(entry.FullPath)).Text;
                 file.NewFile();
                 file.ApplyRecoveredBackup(content);
                 UpdateTitle();

@@ -858,7 +858,7 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="{u:Loc Key=Markdown}" FontSize="12" VerticalAlignment="Center"
+                <TextBlock Grid.Column="0" x:Name="StatusBarFormatText" Text="{u:Loc Key=Markdown}" FontSize="12" VerticalAlignment="Center"
                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                 <Button Grid.Column="1" x:Name="StatusBarWordCountButton" Click="StatusBarWordCountButton_Click"
                         Background="Transparent" BorderThickness="0" Padding="6,2" FontSize="12"

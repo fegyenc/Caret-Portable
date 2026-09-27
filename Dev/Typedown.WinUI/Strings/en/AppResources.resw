@@ -1181,4 +1181,10 @@ If Python is installed somewhere else, choose its python.exe. Otherwise install 
   <data name="PortableUpdatesNote" xml:space="preserve">
     <value>This is the portable version: to update, replace the folder with a newer one. Your settings are in the Data folder next to Caret.exe.</value>
   </data>
+  <data name="StatusLegacyEncoding" xml:space="preserve">
+    <value>Markdown · {0}</value>
+  </data>
+  <data name="StatusLegacyEncodingTip" xml:space="preserve">
+    <value>This file isn't saved as UTF-8, so Caret read it with Windows' {0} encoding. Saving it converts it to UTF-8, which every Markdown tool expects.</value>
+  </data>
 </root>
