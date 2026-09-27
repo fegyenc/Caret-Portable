@@ -430,7 +430,7 @@
     <value>Écrivez. Prévisualisez. Organisez.</value>
   </data>
   <data name="FavoritesEmptyText_Text" xml:space="preserve">
-    <value>Aucun favori pour l'instant. Cliquez sur l'étoile dans la barre de titre, ou cliquez avec le bouton droit sur un fichier dans l'arborescence des dossiers.</value>
+    <value>Aucun favori pour l'instant. Utilisez Fichier &gt; Favori, cliquez avec le bouton droit sur un onglet, ou sur un fichier dans l'arborescence des dossiers.</value>
   </data>
   <data name="SaveCurrentDocumentAsTemplate" xml:space="preserve">
     <value>Enregistrer le document actuel comme modèle...</value>
@@ -1045,7 +1045,7 @@
     <value>Choisir un dossier...</value>
   </data>
   <data name="ConvertFormats" xml:space="preserve">
-    <value>Word (.docx) · Excel (.xlsx, .xls) · PowerPoint (.pptx) · PDF · CSV · Outlook (.msg) · HTML · EPUB · JSON · XML · ZIP. Conversion sur ce PC, rien n'est envoyé en ligne.</value>
+    <value>Word (.docx) · Excel (.xlsx, .xls) · PowerPoint (.pptx) · PDF · CSV · e-mails Outlook (.msg, .eml) · HTML · EPUB · JSON · XML · ZIP. Conversion sur ce PC, rien n'est envoyé en ligne.</value>
   </data>
   <data name="ConvertSaveTo" xml:space="preserve">
     <value>Enregistrer les fichiers Markdown</value>
@@ -1173,6 +1173,421 @@
   <data name="PolicyUpdatesNote" xml:space="preserve">
     <value>Les mises à jour sont gérées par votre organisation.</value>
   </data>
+  <data name="StatusLegacyEncoding" xml:space="preserve">
+    <value>Markdown · {0}</value>
+  </data>
+  <data name="StatusLegacyEncodingTip" xml:space="preserve">
+    <value>Ce fichier n'est pas enregistré en UTF-8 : Caret l'a lu avec l'encodage Windows {0}. L'enregistrer le convertit en UTF-8, le format attendu par tous les outils Markdown.</value>
+  </data>
+  <data name="ConvertChooseEmails" xml:space="preserve">
+    <value>Choisir des e-mails...</value>
+  </data>
+  <data name="ConvertChooseEmailsTip" xml:space="preserve">
+    <value>Convertit les e-mails enregistrés depuis Outlook (.msg) ou d'autres messageries (.eml). Pour les enregistrer, faites glisser les messages d'Outlook vers un dossier. Toute la conversation devient un seul fichier Markdown propre, du plus ancien au plus récent, sans signatures ni mentions légales.</value>
+  </data>
+  <data name="ConvertMaskPersonalData" xml:space="preserve">
+    <value>Masquer les données personnelles</value>
+  </data>
+  <data name="ConvertMaskPersonalDataTip" xml:space="preserve">
+    <value>Remplace les noms, adresses e-mail, numéros de téléphone, IBAN, numéros de carte et d'identité par des repères comme [PERSON-1] avant de coller le texte dans un assistant IA. Fondé sur des règles et réalisé sur ce PC, sans aucune IA. Les noms sont repérés d'après les expéditeurs et destinataires de l'e-mail.</value>
+  </data>
+  <data name="ConvertPersonalDataMasked" xml:space="preserve">
+    <value>données personnelles masquées</value>
+  </data>
+  <data name="ConvertEmailsNav" xml:space="preserve">
+    <value>E-mails Outlook</value>
+  </data>
+  <data name="ConvertEmailCardTitle" xml:space="preserve">
+    <value>E-mails Outlook en Markdown</value>
+  </data>
+  <data name="ConvertEmailCardText" xml:space="preserve">
+    <value>Transformez toute une conversation en un seul fichier propre pour l'IA : chaque réponse devient un message distinct, du plus ancien au plus récent, sans signatures, mentions légales ni bandeaux, pièces jointes comprises. Les noms, adresses et numéros de téléphone sont masqués. Sans IA, et rien ne quitte ce PC.</value>
+  </data>
+  <data name="NewBadge" xml:space="preserve">
+    <value>Nouveau</value>
+  </data>
+  <data name="HomeEmailsTitle" xml:space="preserve">
+    <value>Convertir des e-mails Outlook</value>
+  </data>
+  <data name="HomeEmailsSubtitle" xml:space="preserve">
+    <value>Conversations propres, données personnelles masquées → texte prêt pour l'IA</value>
+  </data>
+  <data name="ConvertEmailsMenuItem" xml:space="preserve">
+    <value>Convertir des e-mails Outlook...</value>
+  </data>
+  <data name="NotSavedYet" xml:space="preserve">
+    <value>Pas encore enregistré</value>
+  </data>
+  <data name="CloseDocumentMenuItem" xml:space="preserve">
+    <value>Fermer le document</value>
+  </data>
+  <data name="CloseOtherDocuments" xml:space="preserve">
+    <value>Fermer les autres documents</value>
+  </data>
+  <data name="CloseDocumentsToTheRight" xml:space="preserve">
+    <value>Fermer les documents à droite</value>
+  </data>
+  <data name="MoveToNewWindow" xml:space="preserve">
+    <value>Déplacer vers une nouvelle fenêtre</value>
+  </data>
+  <data name="CloseWindowMenuItem" xml:space="preserve">
+    <value>Fermer la fenêtre</value>
+  </data>
+  <data name="CtrlShiftW" xml:space="preserve">
+    <value>Ctrl+Maj+W</value>
+  </data>
+  <data name="UnsavedDocumentsPrompt" xml:space="preserve">
+    <value>Ces documents contiennent des modifications non enregistrées :
+{0}</value>
+  </data>
+  <data name="SaveAll" xml:space="preserve">
+    <value>Tout enregistrer</value>
+  </data>
+  <data name="RecoverUntitledMany" xml:space="preserve">
+    <value>{0} documents sans titre d'une session précédente n'ont jamais été enregistrés. Les récupérer ?</value>
+  </data>
+  <data name="StartPageTitle" xml:space="preserve">
+    <value>Et maintenant ?</value>
+  </data>
+  <data name="StartPageSubtitle" xml:space="preserve">
+    <value>Commencez une note, ouvrez un fichier, ou transformez des documents et des e-mails Outlook en Markdown.</value>
+  </data>
+  <data name="StartNewNote" xml:space="preserve">
+    <value>Nouvelle note</value>
+  </data>
+  <data name="StartNewNoteText" xml:space="preserve">
+    <value>Un document Markdown vierge</value>
+  </data>
+  <data name="StartOpenFile" xml:space="preserve">
+    <value>Ouvrir un fichier</value>
+  </data>
+  <data name="StartOpenFileText" xml:space="preserve">
+    <value>Fichiers Markdown sur ce PC</value>
+  </data>
+  <data name="StartPageRecent" xml:space="preserve">
+    <value>Fichiers récents</value>
+  </data>
+  <data name="UseTabsToggle" xml:space="preserve">
+    <value>Ouvrir les documents dans des onglets</value>
+  </data>
+  <data name="RestoreTabsToggle" xml:space="preserve">
+    <value>Rouvrir vos documents au démarrage de Caret</value>
+  </data>
+  <data name="NavCreateHeader" xml:space="preserve">
+    <value>Créer</value>
+  </data>
+  <data name="NavLibraryHeader" xml:space="preserve">
+    <value>Bibliothèque</value>
+  </data>
+  <data name="OutlineHeader" xml:space="preserve">
+    <value>Plan</value>
+  </data>
+  <data name="FavoriteMenuItem" xml:space="preserve">
+    <value>Favori</value>
+  </data>
+  <data name="ThemeMenu" xml:space="preserve">
+    <value>Thème</value>
+  </data>
+  <data name="SettingsGeneral" xml:space="preserve">
+    <value>Général</value>
+  </data>
+  <data name="SettingsAppearance" xml:space="preserve">
+    <value>Apparence</value>
+  </data>
+  <data name="SettingsLayout" xml:space="preserve">
+    <value>Disposition</value>
+  </data>
+  <data name="SettingsEditor" xml:space="preserve">
+    <value>Éditeur</value>
+  </data>
+  <data name="SettingsTabsWindows" xml:space="preserve">
+    <value>Onglets et fenêtres</value>
+  </data>
+  <data name="SettingsConvert" xml:space="preserve">
+    <value>Conversion</value>
+  </data>
+  <data name="SettingsImages" xml:space="preserve">
+    <value>Images</value>
+  </data>
+  <data name="SettingsKeyboard" xml:space="preserve">
+    <value>Clavier</value>
+  </data>
+  <data name="SearchSettings" xml:space="preserve">
+    <value>Rechercher un paramètre</value>
+  </data>
+  <data name="SettingsNoResults" xml:space="preserve">
+    <value>Aucun paramètre trouvé</value>
+  </data>
+  <data name="OnStartupHeader" xml:space="preserve">
+    <value>Au démarrage</value>
+  </data>
+  <data name="ThemeDescription" xml:space="preserve">
+    <value>Clair, sombre ou comme Windows</value>
+  </data>
+  <data name="ColorScheme" xml:space="preserve">
+    <value>Jeu de couleurs</value>
+  </data>
+  <data name="ColorSchemeDescription" xml:space="preserve">
+    <value>Les couleurs de toute la fenêtre. Essayez-les avec les flèches.</value>
+  </data>
+  <data name="SchemeCopper" xml:space="preserve">
+    <value>Cuivre</value>
+  </data>
+  <data name="SchemePaper" xml:space="preserve">
+    <value>Papier</value>
+  </data>
+  <data name="SchemeSage" xml:space="preserve">
+    <value>Sauge</value>
+  </data>
+  <data name="SchemeHarbour" xml:space="preserve">
+    <value>Port</value>
+  </data>
+  <data name="SchemeGraphite" xml:space="preserve">
+    <value>Graphite</value>
+  </data>
+  <data name="AccentColor" xml:space="preserve">
+    <value>Couleur d'accentuation</value>
+  </data>
+  <data name="AccentColorDescription" xml:space="preserve">
+    <value>Boutons, interrupteurs, sélection et liens</value>
+  </data>
+  <data name="AccentScheme" xml:space="preserve">
+    <value>Celle du jeu de couleurs</value>
+  </data>
+  <data name="AccentWindows" xml:space="preserve">
+    <value>Couleur d'accentuation de Windows</value>
+  </data>
+  <data name="WindowMaterial" xml:space="preserve">
+    <value>Matière de la fenêtre</value>
+  </data>
+  <data name="WindowMaterialDescription" xml:space="preserve">
+    <value>Mica laisse votre bureau teinter le cadre de la fenêtre. La page reste opaque.</value>
+  </data>
+  <data name="WindowMaterialUnsupported" xml:space="preserve">
+    <value>Mica nécessite Windows 11.</value>
+  </data>
+  <data name="MaterialSolid" xml:space="preserve">
+    <value>Opaque</value>
+  </data>
+  <data name="ContrastThemeActive" xml:space="preserve">
+    <value>Un thème de contraste est actif dans Windows : Caret utilise ses couleurs. Le jeu de couleurs et la couleur d'accentuation reviennent quand il est désactivé.</value>
+  </data>
+  <data name="DecorativeCard" xml:space="preserve">
+    <value>Illustration de la barre latérale</value>
+  </data>
+  <data name="DecorativeCardDescription" xml:space="preserve">
+    <value>La carte illustrée en bas de la barre latérale. Elle est de toute façon masquée dans une fenêtre basse.</value>
+  </data>
+  <data name="PageWidth" xml:space="preserve">
+    <value>Largeur de la page</value>
+  </data>
+  <data name="PageWidthDescription" xml:space="preserve">
+    <value>Jusqu'où la colonne de texte peut s'élargir</value>
+  </data>
+  <data name="PageWidthNarrow" xml:space="preserve">
+    <value>Étroite (720 px)</value>
+  </data>
+  <data name="PageWidthMedium" xml:space="preserve">
+    <value>Moyenne (900 px)</value>
+  </data>
+  <data name="PageWidthWide" xml:space="preserve">
+    <value>Large (1200 px)</value>
+  </data>
+  <data name="PageWidthFull" xml:space="preserve">
+    <value>Toute la fenêtre</value>
+  </data>
+  <data name="PageWidthCustom" xml:space="preserve">
+    <value>Personnalisée</value>
+  </data>
+  <data name="TypewriterToggle" xml:space="preserve">
+    <value>Mode machine à écrire</value>
+  </data>
+  <data name="TypewriterToggleDescription" xml:space="preserve">
+    <value>Garde la ligne en cours au milieu de la fenêtre</value>
+  </data>
+  <data name="FocusModeToggle" xml:space="preserve">
+    <value>Mode concentration</value>
+  </data>
+  <data name="FocusModeToggleDescription" xml:space="preserve">
+    <value>Estompe tous les paragraphes sauf celui en cours</value>
+  </data>
+  <data name="ConvertSettingsDescription" xml:space="preserve">
+    <value>Le dossier de sortie, les images et le masquage des données personnelles se règlent sur la page Conversion.</value>
+  </data>
+  <data name="OpenConvertPage" xml:space="preserve">
+    <value>Ouvrir la page Conversion</value>
+  </data>
+  <data name="NextPreviousTab" xml:space="preserve">
+    <value>Onglet suivant / précédent</value>
+  </data>
+  <data name="ViewModeMenu" xml:space="preserve">
+    <value>Visuel / Code / Fractionné</value>
+  </data>
+  <data name="Back" xml:space="preserve">
+    <value>Retour</value>
+  </data>
+  <data name="StartPagePinnedRecent" xml:space="preserve">
+    <value>Favoris et fichiers récents</value>
+  </data>
+  <data name="Yesterday" xml:space="preserve">
+    <value>Hier</value>
+  </data>
+  <data name="WindowLayout" xml:space="preserve">
+    <value>Disposition de la fenêtre</value>
+  </data>
+  <data name="WindowLayoutDescription" xml:space="preserve">
+    <value>Classique garde le menu et la barre d'outils sur deux lignes. Épurée les réunit sur une seule. Sans distraction les masque jusqu'à ce que vous en ayez besoin (F11).</value>
+  </data>
+  <data name="LayoutClassic" xml:space="preserve">
+    <value>Classique</value>
+  </data>
+  <data name="LayoutStreamlined" xml:space="preserve">
+    <value>Épurée</value>
+  </data>
+  <data name="LayoutDistraction" xml:space="preserve">
+    <value>Sans distraction</value>
+  </data>
+  <data name="Density" xml:space="preserve">
+    <value>Densité</value>
+  </data>
+  <data name="DensityDescription" xml:space="preserve">
+    <value>Le mode compact affiche davantage à l'écran. S'applique au prochain démarrage de Caret.</value>
+  </data>
+  <data name="DensityStandard" xml:space="preserve">
+    <value>Standard</value>
+  </data>
+  <data name="DensityCompact" xml:space="preserve">
+    <value>Compacte</value>
+  </data>
+  <data name="SidebarPosition" xml:space="preserve">
+    <value>Position de la barre latérale</value>
+  </data>
+  <data name="SideLeft" xml:space="preserve">
+    <value>À gauche</value>
+  </data>
+  <data name="SideRight" xml:space="preserve">
+    <value>À droite</value>
+  </data>
+  <data name="SidebarRail" xml:space="preserve">
+    <value>Barre latérale étroite</value>
+  </data>
+  <data name="SidebarRailDescription" xml:space="preserve">
+    <value>Icônes seules. Choisir une liste l'élargit à nouveau.</value>
+  </data>
+  <data name="ExpandSidebar" xml:space="preserve">
+    <value>Élargir la barre latérale</value>
+  </data>
+  <data name="CollapseSidebar" xml:space="preserve">
+    <value>Réduire la barre latérale</value>
+  </data>
+  <data name="MoveBetweenAreas" xml:space="preserve">
+    <value>Passer d'une zone de la fenêtre à l'autre</value>
+  </data>
+  <data name="HeadingMenu" xml:space="preserve">
+    <value>Titre</value>
+  </data>
+  <data name="FormattingToolbar" xml:space="preserve">
+    <value>Mise en forme</value>
+  </data>
+  <data name="AccessKeyFile" xml:space="preserve">
+    <value>F</value>
+  </data>
+  <data name="AccessKeyEdit" xml:space="preserve">
+    <value>E</value>
+  </data>
+  <data name="AccessKeyParagraph" xml:space="preserve">
+    <value>P</value>
+  </data>
+  <data name="AccessKeyFormat" xml:space="preserve">
+    <value>O</value>
+  </data>
+  <data name="AccessKeyView" xml:space="preserve">
+    <value>A</value>
+  </data>
+  <data name="SectionColors" xml:space="preserve">
+    <value>Couleurs des zones</value>
+  </data>
+  <data name="SectionColorsDescription" xml:space="preserve">
+    <value>Changez une zone à la fois. Les couleurs difficiles à lire ne sont pas proposées.</value>
+  </data>
+  <data name="SectionBand" xml:space="preserve">
+    <value>Barre de titre et onglets</value>
+  </data>
+  <data name="SectionSidebar" xml:space="preserve">
+    <value>Barre latérale</value>
+  </data>
+  <data name="SectionPage" xml:space="preserve">
+    <value>Page de l'éditeur</value>
+  </data>
+  <data name="SectionStatus" xml:space="preserve">
+    <value>Barre d'état</value>
+  </data>
+  <data name="SwatchDefault" xml:space="preserve">
+    <value>Celle du jeu de couleurs</value>
+  </data>
+  <data name="SwatchWarmSand" xml:space="preserve">
+    <value>Sable</value>
+  </data>
+  <data name="SwatchMist" xml:space="preserve">
+    <value>Brume</value>
+  </data>
+  <data name="SwatchStone" xml:space="preserve">
+    <value>Pierre</value>
+  </data>
+  <data name="SwatchLavender" xml:space="preserve">
+    <value>Lavande</value>
+  </data>
+  <data name="SwatchEspresso" xml:space="preserve">
+    <value>Expresso</value>
+  </data>
+  <data name="SwatchUmber" xml:space="preserve">
+    <value>Terre d'ombre</value>
+  </data>
+  <data name="SwatchMoss" xml:space="preserve">
+    <value>Mousse</value>
+  </data>
+  <data name="SwatchNight" xml:space="preserve">
+    <value>Nuit</value>
+  </data>
+  <data name="SwatchCharcoal" xml:space="preserve">
+    <value>Anthracite</value>
+  </data>
+  <data name="SwatchPlum" xml:space="preserve">
+    <value>Prune</value>
+  </data>
+  <data name="TooLittleContrast" xml:space="preserve">
+    <value>Contraste insuffisant</value>
+  </data>
+  <data name="TabColorMenu" xml:space="preserve">
+    <value>Couleur de l'onglet</value>
+  </data>
+  <data name="ColorNone" xml:space="preserve">
+    <value>Aucune</value>
+  </data>
+  <data name="ColorRed" xml:space="preserve">
+    <value>Rouge</value>
+  </data>
+  <data name="ColorOrange" xml:space="preserve">
+    <value>Orange</value>
+  </data>
+  <data name="ColorYellow" xml:space="preserve">
+    <value>Jaune</value>
+  </data>
+  <data name="ColorGreen" xml:space="preserve">
+    <value>Vert</value>
+  </data>
+  <data name="ColorTeal" xml:space="preserve">
+    <value>Sarcelle</value>
+  </data>
+  <data name="ColorBlue" xml:space="preserve">
+    <value>Bleu</value>
+  </data>
+  <data name="ColorPurple" xml:space="preserve">
+    <value>Violet</value>
+  </data>
+  <data name="ColorPink" xml:space="preserve">
+    <value>Rose</value>
+  </data>
   <data name="ConvertMarkItDownNotReady" xml:space="preserve">
     <value>Non converti : MarkItDown n'est pas encore configuré. Voir Convertisseur ci-dessus.</value>
   </data>
@@ -1228,11 +1643,5 @@ Si Python est installé ailleurs, choisissez son python.exe. Sinon, installez Py
   </data>
   <data name="PortableUpdatesNote" xml:space="preserve">
     <value>Ceci est la version portable : pour la mettre à jour, remplacez le dossier par une version plus récente. Vos paramètres se trouvent dans le dossier Data, à côté de Caret.exe.</value>
-  </data>
-  <data name="StatusLegacyEncoding" xml:space="preserve">
-    <value>Markdown · {0}</value>
-  </data>
-  <data name="StatusLegacyEncodingTip" xml:space="preserve">
-    <value>Ce fichier n'est pas enregistré en UTF-8 : Caret l'a lu avec l'encodage Windows {0}. L'enregistrer le convertit en UTF-8, le format attendu par tous les outils Markdown.</value>
   </data>
 </root>

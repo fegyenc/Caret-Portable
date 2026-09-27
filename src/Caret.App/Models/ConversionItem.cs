@@ -40,6 +40,8 @@ namespace Typedown.WinUI.Models
             ".csv" => ("CSV", Windows.UI.Color.FromArgb(255, 0x21, 0x73, 0x46)),
             ".pptx" or ".pptm" or ".ppt" => ("PPTX", Windows.UI.Color.FromArgb(255, 0xC4, 0x3E, 0x1C)),
             ".pdf" => ("PDF", Windows.UI.Color.FromArgb(255, 0xB3, 0x0B, 0x00)),
+            ".msg" => ("MSG", Windows.UI.Color.FromArgb(255, 0x00, 0x5A, 0x9E)),
+            ".eml" => ("EML", Windows.UI.Color.FromArgb(255, 0x00, 0x5A, 0x9E)),
             _ => ((extension ?? "").TrimStart('.').ToUpperInvariant(), Windows.UI.Color.FromArgb(255, 0x6B, 0x6B, 0x6B)),
         };
     }

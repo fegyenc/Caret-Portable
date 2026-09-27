@@ -44,9 +44,10 @@ namespace Typedown.WinUI.Utilities
         // File Explorer's own Copy puts an OLE data object with async rendering on the clipboard; its
         // CF_HDROP isn't reachable through raw GetClipboardData from this process (NULL, no error) but
         // is through OLE, the way WinForms' Clipboard.GetFileDropList reads it. Tried first.
-        private static bool TryGetViaOle(out string[] paths)
+        private static bool TryGetViaOle(out string[] paths, out bool isMove)
         {
             paths = Array.Empty<string>();
+            isMove = false;
             if (OleGetClipboard(out var dataObject) != 0 || dataObject == null) return false;
             var format = new System.Runtime.InteropServices.ComTypes.FORMATETC
             {
@@ -61,7 +62,34 @@ namespace Typedown.WinUI.Utilities
             try
             {
                 paths = ReadDropFiles(medium.unionmember);
-                return paths.Length > 0;
+            }
+            finally
+            {
+                ReleaseStgMedium(ref medium);
+            }
+            // Cut in Explorer marks the same data object with a move effect
+            isMove = (ReadDropEffect(dataObject) & DROPEFFECT_MOVE) != 0;
+            return paths.Length > 0;
+        }
+
+        private static int ReadDropEffect(System.Runtime.InteropServices.ComTypes.IDataObject dataObject)
+        {
+            var format = new System.Runtime.InteropServices.ComTypes.FORMATETC
+            {
+                cfFormat = unchecked((short)RegisterClipboardFormat("Preferred DropEffect")),
+                dwAspect = System.Runtime.InteropServices.ComTypes.DVASPECT.DVASPECT_CONTENT,
+                lindex = -1,
+                tymed = System.Runtime.InteropServices.ComTypes.TYMED.TYMED_HGLOBAL,
+            };
+            System.Runtime.InteropServices.ComTypes.STGMEDIUM medium;
+            try { dataObject.GetData(ref format, out medium); }
+            catch (COMException) { return 0; } // no effect offered: a copy
+            try
+            {
+                var pointer = GlobalLock(medium.unionmember);
+                if (pointer == IntPtr.Zero) return 0;
+                try { return Marshal.ReadInt32(pointer); }
+                finally { GlobalUnlock(medium.unionmember); }
             }
             finally
             {
@@ -87,7 +115,7 @@ namespace Typedown.WinUI.Utilities
         {
             isMove = false;
             failure = null;
-            if (TryGetViaOle(out paths)) return true;
+            if (TryGetViaOle(out paths, out isMove)) return true;
             return TryGetViaWin32(owner, out paths, out isMove, out failure);
         }
 

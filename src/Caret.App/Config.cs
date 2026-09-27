@@ -25,7 +25,8 @@ namespace Typedown.WinUI
         public static Color BrandLightBackground { get; } = Color.FromArgb(0xFF, 0xF8, 0xEB, 0xDD);
         public static Color BrandDarkBackground { get; } = Color.FromArgb(0xFF, 0x0E, 0x12, 0x20);
         public static Color BrandLightAccent { get; } = Color.FromArgb(0xFF, 0xA5, 0x52, 0x2A);
-        public static Color BrandDarkAccent { get; } = Color.FromArgb(0xFF, 0x8F, 0x4A, 0x22);
+        // The dark accent the native controls use too (Themes/Caret.xaml): #8F4A22 measured 2.82 : 1 on the page.
+        public static Color BrandDarkAccent { get; } = Color.FromArgb(0xFF, 0xB5, 0x5E, 0x2A);
 
         public static IReadOnlyList<string> WebView2Args { get; } = new List<string>()
         {
@@ -124,13 +125,40 @@ namespace Typedown.WinUI
         // registry setting: DWORD values under HKLM (or HKCU) \SOFTWARE\Policies\Caret.
         //   DisableUpdateCheck = 1        → no GitHub update check, and the setting is hidden
         //   DisableMarkItDownInstall = 1  → Caret never runs pip to install MarkItDown
-        // See docs/deployment.md.
+        // See the README (Organization policy).
         public static bool PolicyDisablesUpdateCheck { get; } = ReadPolicy("DisableUpdateCheck");
         public static bool PolicyDisablesMarkItDownInstall { get; } = ReadPolicy("DisableMarkItDownInstall");
 
         // Whether Caret may check GitHub for new releases at all: not in the Store (the Store updates
         // it), not when an administrator turned it off, and not in an unpackaged dev build.
         public static bool UpdateCheckAvailable => IsPackaged && !IsStoreInstall && !PolicyDisablesUpdateCheck;
+
+        // They can also choose what everyone starts with: string (REG_SZ) values under the same key.
+        // These are defaults, not locks: a user who picks something else in Settings keeps it.
+        //   DefaultLayout      = classic | streamlined
+        //   DefaultColorScheme = copper | paper | sage | harbour (or harbor) | graphite
+        //   DefaultAccentColor = scheme | windows
+        //   DefaultTheme       = system | light | dark
+        // An unknown value is ignored.
+        public static string PolicyDefaultLayout { get; } = ReadPolicyChoice("DefaultLayout", "classic", "streamlined");
+        public static string PolicyDefaultColorScheme { get; } = ReadPolicyChoice("DefaultColorScheme", "copper", "paper", "sage", "harbour", "harbor", "graphite")?.Replace("harbor", "harbour");
+        public static string PolicyDefaultAccentColor { get; } = ReadPolicyChoice("DefaultAccentColor", "scheme", "windows");
+        public static string PolicyDefaultTheme { get; } = ReadPolicyChoice("DefaultTheme", "system", "light", "dark");
+
+        private static string ReadPolicyChoice(string name, params string[] allowed)
+        {
+            foreach (var hive in new[] { Microsoft.Win32.Registry.LocalMachine, Microsoft.Win32.Registry.CurrentUser })
+            {
+                try
+                {
+                    using var key = hive.OpenSubKey(@"SOFTWARE\Policies\Caret");
+                    var value = (key?.GetValue(name) as string)?.Trim().ToLowerInvariant();
+                    if (value != null && Array.IndexOf(allowed, value) >= 0) return value;
+                }
+                catch { }
+            }
+            return null;
+        }
 
         private static bool ReadPolicy(string name)
         {

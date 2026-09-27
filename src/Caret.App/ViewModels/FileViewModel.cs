@@ -45,7 +45,12 @@ namespace Typedown.WinUI.ViewModels
         // (Utilities/TextFileEncoding.cs), e.g. "Windows-1250". Saving writes UTF-8, which clears it.
         public string LegacyEncodingName { get; private set; }
 
-        public bool IsDirty => Markdown != savedSnapshot;
+        // Line endings and the final newline don't count: the editor writes "\n" and may add a newline
+        // at the end, and when its first render is slower than the FileLoaded confirmation (a startup
+        // file with Windows line endings), a document nobody touched would otherwise read as unsaved.
+        public bool IsDirty => Normalized(Markdown) != Normalized(savedSnapshot);
+
+        private static string Normalized(string text) => text?.Replace("\r\n", "\n").TrimEnd('\n');
 
         public string ImageBasePath => string.IsNullOrEmpty(FilePath) ? settings.DefaultImageBasePath : Path.GetDirectoryName(FilePath);
 
@@ -53,21 +58,59 @@ namespace Typedown.WinUI.ViewModels
 
         public event Action FileStateChanged;
 
-        public FileViewModel(SettingsViewModel settings, EventCenter eventCenter, IMarkdownEditor markdownEditor)
+        // With tabs, a window holds several documents but one editor: only the document on screen
+        // takes the editor's MarkdownChange/FileLoaded events. The others keep their text as it was.
+        public bool IsActive { get; set; } = true;
+
+        // Crash-recovery slot. A saved file's is its path, as before; an untitled document gets one of
+        // its own, so two untitled tabs don't overwrite each other's backup.
+        private readonly string untitledKey;
+
+        public string BackupKey => string.IsNullOrEmpty(FilePath) ? untitledKey : FilePath;
+
+        // Only for "Move to new window": the untitled slot travels with the document.
+        public string UntitledKey => untitledKey;
+
+        // Switching tabs re-renders a document the editor may echo back slightly reformatted (the
+        // same normalization pendingLoadIsClean handles on a load). Until the editor's next
+        // StateChange, a clean document takes that echo as its saved state instead of turning dirty.
+        private bool? pendingEchoIsClean;
+
+        // The document that was on screen before: a late report of its text is never this document's.
+        private string echoForeignText;
+
+        public void ExpectEcho(string previousText)
+        {
+            pendingEchoIsClean = !IsDirty;
+            echoForeignText = previousText;
+        }
+
+        public void EndEcho()
+        {
+            pendingEchoIsClean = null;
+            echoForeignText = null;
+        }
+
+        public FileViewModel(SettingsViewModel settings, EventCenter eventCenter, IMarkdownEditor markdownEditor, string untitledKey = null)
         {
             this.settings = settings;
             this.markdownEditor = markdownEditor;
+            this.untitledKey = untitledKey ?? AutoBackup.NewUntitledKey();
             // Mirrors EditorViewModel's constructor in the original: the editor pushes its live text
             // back on every change (see Transport's "diffmsg" handling), so Save always has the
             // current content without a separate "give me the text" round trip.
             eventCenter.GetObservable<EditorEventArgs>("MarkdownChange").Subscribe(x =>
             {
-                Markdown = x.Args["text"]?.ToString() ?? Markdown;
+                if (!IsActive) return;
+                var text = x.Args["text"]?.ToString();
+                if (pendingEchoIsClean != null && echoForeignText != null && text == echoForeignText) return;
+                Markdown = text ?? Markdown;
+                if (pendingEchoIsClean == true) savedSnapshot = Markdown;
                 FileStateChanged?.Invoke();
             });
             eventCenter.GetObservable<EditorEventArgs>("FileLoaded").Subscribe(x =>
             {
-                if (pendingLoadIsClean == null) return;
+                if (!IsActive || pendingLoadIsClean == null) return;
                 if (pendingLoadIsClean == true)
                     savedSnapshot = x.Args["text"]?.ToString() ?? savedSnapshot;
                 pendingLoadIsClean = null;
@@ -104,6 +147,7 @@ namespace Typedown.WinUI.ViewModels
             LegacyEncodingName = null;
             Markdown = "";
             savedSnapshot = Markdown;
+            CompleteDiscard();
             pendingLoadIsClean = true;
             PushToEditor();
             FileStateChanged?.Invoke();
@@ -117,6 +161,7 @@ namespace Typedown.WinUI.ViewModels
             LegacyEncodingName = read.LegacyName;
             savedSnapshot = Markdown;
             FilePath = path;
+            CompleteDiscard();
             pendingLoadIsClean = true;
             PushToEditor();
             FileStateChanged?.Invoke();
@@ -140,7 +185,7 @@ namespace Typedown.WinUI.ViewModels
             LegacyEncodingName = null; // written as UTF-8 now
             savedSnapshot = Markdown;
             // The document is now safely on disk for real — any recovery backup for it is obsolete.
-            AutoBackup.DeleteBackup(FilePath);
+            AutoBackup.DeleteBackup(BackupKey);
             FileStateChanged?.Invoke();
             return true;
         }
@@ -149,9 +194,9 @@ namespace Typedown.WinUI.ViewModels
         {
             await File.WriteAllTextAsync(path, Markdown);
             // Clears the backup slot this document was using before it had a real save location
-            // (null/"" for a never-saved untitled document) — matches the original's ordering of
-            // deleting under the *old* FilePath before reassigning it.
-            AutoBackup.DeleteBackup(FilePath);
+            // (its untitled slot, or the old path) — matches the original's ordering of deleting
+            // under the *old* key before reassigning FilePath.
+            AutoBackup.DeleteBackup(BackupKey);
             FilePath = path;
             LegacyEncodingName = null;
             savedSnapshot = Markdown;
@@ -177,14 +222,34 @@ namespace Typedown.WinUI.ViewModels
         // dirty, which would throw away the last good recovery copy exactly when it's needed.
         public async Task<bool> BackupTick()
         {
-            if (ShouldBackup) return await AutoBackup.Backup(FilePath, Markdown);
-            if (!IsDirty) AutoBackup.DeleteBackup(FilePath);
+            if (ShouldBackup) return await AutoBackup.Backup(BackupKey, Markdown);
+            if (!IsDirty) AutoBackup.DeleteBackup(BackupKey);
             return false;
         }
 
         public Task<string> PeekBackup(string path) => AutoBackup.GetBackup(path);
 
         public void DiscardBackup(string path) => AutoBackup.DeleteBackup(path);
+
+        // "Don't Save": the recovery backup of the text being thrown away is deleted once the document
+        // is really replaced (NewFile/OpenFile, after the new content is in place, so the backup timer
+        // can't write the old text again in between) or its window closes, not when the user answers:
+        // a file picker may still follow, and if it's cancelled the text stays open and protected.
+        private bool discardPending;
+        private string discardPath;
+
+        public void DiscardOnSwitch()
+        {
+            discardPending = true;
+            discardPath = BackupKey;
+        }
+
+        public void CompleteDiscard()
+        {
+            if (!discardPending) return;
+            discardPending = false;
+            AutoBackup.DeleteBackup(discardPath);
+        }
 
         // Swaps in recovered backup text after NewFile/OpenFile/LoadStartUpMarkdown already ran.
         // savedSnapshot is deliberately left mismatched (not set to the recovered text) so IsDirty

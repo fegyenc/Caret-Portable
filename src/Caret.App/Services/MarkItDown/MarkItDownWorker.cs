@@ -32,7 +32,7 @@ namespace Typedown.WinUI.Services.MarkItDown
     public sealed class MarkItDownWorker : IDisposable
     {
         private const string WorkerScript = """
-            import sys, json, csv, io
+            import sys, json, csv, io, os
             out = sys.stdout
             sys.stdout = sys.stderr
             def send(obj):
@@ -42,10 +42,23 @@ namespace Typedown.WinUI.Services.MarkItDown
                 import importlib.metadata as m
                 from markitdown import MarkItDown
                 md = MarkItDown()
-                send({'ready': True, 'version': m.version('markitdown')})
+                version = m.version('markitdown')
             except Exception as e:
                 send({'ready': False, 'error': '%s: %s' % (type(e).__name__, e)})
                 sys.exit(1)
+            # Caret's email plugin ships in the app folder; it's put on the path and registered here,
+            # so nothing has to be pip-installed. Without it MarkItDown's basic .msg converter is used.
+            email_error = 'not shipped'
+            plugins = sys.argv[1] if len(sys.argv) > 1 else ''
+            if plugins and os.path.isdir(plugins):
+                sys.path.insert(0, plugins)
+                try:
+                    import markitdown_caret_email
+                    markitdown_caret_email.register_converters(md)
+                    email_error = None
+                except Exception as e:
+                    email_error = '%s: %s' % (type(e).__name__, e)
+            send({'ready': True, 'version': version, 'emailPlugin': email_error is None, 'emailError': email_error})
             try:
                 from markitdown import StreamInfo
             except Exception:
@@ -61,9 +74,9 @@ namespace Typedown.WinUI.Services.MarkItDown
                             n += 1
                     return n
                 return max(',;\t|', key=count)
-            def convert(src, charset):
+            def convert(src, charset, options):
                 if StreamInfo is None or not charset:
-                    return md.convert(src)
+                    return md.convert(src, **options)
                 if src.lower().endswith('.csv'):
                     with open(src, 'rb') as f:
                         text = f.read().decode(charset)
@@ -72,14 +85,17 @@ namespace Typedown.WinUI.Services.MarkItDown
                         buf = io.StringIO()
                         csv.writer(buf, lineterminator='\n').writerows(csv.reader(io.StringIO(text, newline=''), delimiter=d))
                         return md.convert(io.BytesIO(buf.getvalue().encode('utf-8')), stream_info=StreamInfo(extension='.csv', charset='utf-8'))
-                return md.convert(src, stream_info=StreamInfo(charset=charset))
+                return md.convert(src, stream_info=StreamInfo(charset=charset), **options)
             for line in sys.stdin:
                 line = line.strip()
                 if not line:
                     continue
                 try:
                     job = json.loads(line)
-                    result = convert(job['src'], job.get('charset'))
+                    options = {}
+                    if job.get('emailRedact') is not None:
+                        options['email_redact'] = bool(job['emailRedact'])
+                    result = convert(job['src'], job.get('charset'), options)
                     send({'ok': True, 'markdown': result.text_content or ''})
                 except Exception as e:
                     send({'ok': False, 'kind': type(e).__name__, 'error': str(e) or type(e).__name__})
@@ -91,6 +107,14 @@ namespace Typedown.WinUI.Services.MarkItDown
         private readonly StringBuilder stderrTail = new();
 
         public string Version { get; private set; }
+
+        // Whether Caret's email plugin (markitdown-plugins\markitdown_caret_email) loaded; if not,
+        // EmailPluginError says why, and MarkItDown's basic .msg converter is used.
+        public bool HasEmailPlugin { get; private set; }
+        public string EmailPluginError { get; private set; }
+
+        // Shipped next to Caret.exe (Caret.App.csproj copies plugins/markitdown-email there).
+        public static string PluginsFolder => Path.Combine(AppContext.BaseDirectory, "markitdown-plugins");
 
         public bool IsAlive => !disposed && !timedOut && !process.HasExited;
 
@@ -104,7 +128,7 @@ namespace Typedown.WinUI.Services.MarkItDown
 
         public static async Task<MarkItDownWorker> StartAsync(string pythonExe, int startTimeoutMs = 90_000)
         {
-            var startInfo = ProcessRunner.CreateStartInfo(pythonExe, new[] { "-u", "-c", WorkerScript });
+            var startInfo = ProcessRunner.CreateStartInfo(pythonExe, new[] { "-u", "-c", WorkerScript, PluginsFolder });
             startInfo.RedirectStandardInput = true;
             startInfo.StandardInputEncoding = new UTF8Encoding(false);
             var process = new Process { StartInfo = startInfo };
@@ -134,16 +158,19 @@ namespace Typedown.WinUI.Services.MarkItDown
                 throw new MarkItDownStartException(hello.Value<string>("error") ?? "MarkItDown couldn't start.");
             }
             worker.Version = hello.Value<string>("version");
+            worker.HasEmailPlugin = hello.Value<bool?>("emailPlugin") == true;
+            worker.EmailPluginError = hello.Value<string>("emailError");
             return worker;
         }
 
         // A timed-out or crashed conversion ends this worker (IsAlive turns false); the caller starts
         // a new one for the next file.
-        public async Task<MarkItDownResult> ConvertAsync(string sourcePath, int timeoutMs)
+        // emailRedact: mask personal data in .msg/.eml (the email plugin's email_redact option).
+        public async Task<MarkItDownResult> ConvertAsync(string sourcePath, int timeoutMs, bool? emailRedact = null)
         {
             if (!IsAlive) throw new InvalidOperationException("The MarkItDown worker has stopped.");
             stderrTail.Clear();
-            var request = JsonConvert.SerializeObject(new { src = sourcePath, charset = MarkItDownFormats.CharsetFor(sourcePath) }, AsciiJson);
+            var request = JsonConvert.SerializeObject(new { src = sourcePath, charset = MarkItDownFormats.CharsetFor(sourcePath), emailRedact }, AsciiJson);
             await process.StandardInput.WriteLineAsync(request);
             await process.StandardInput.FlushAsync();
             var reply = await ReadMessageAsync(timeoutMs);

@@ -33,6 +33,8 @@ namespace Typedown.WinUI.Utilities
                 return new Result(Encoding.UTF8.GetString(bytes, 3, bytes.Length - 3), null);
             if (bytes.Length >= 4 && bytes[0] == 0xFF && bytes[1] == 0xFE && bytes[2] == 0 && bytes[3] == 0)
                 return new Result(Encoding.UTF32.GetString(bytes, 4, bytes.Length - 4), null);
+            if (bytes.Length >= 4 && bytes[0] == 0 && bytes[1] == 0 && bytes[2] == 0xFE && bytes[3] == 0xFF)
+                return new Result(new UTF32Encoding(bigEndian: true, byteOrderMark: false).GetString(bytes, 4, bytes.Length - 4), null);
             if (bytes.Length >= 2 && bytes[0] == 0xFF && bytes[1] == 0xFE)
                 return new Result(Encoding.Unicode.GetString(bytes, 2, bytes.Length - 2), null);
             if (bytes.Length >= 2 && bytes[0] == 0xFE && bytes[1] == 0xFF)

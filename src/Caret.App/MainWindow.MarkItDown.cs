@@ -241,7 +241,7 @@ namespace Typedown.WinUI
             foreach (var ext in MarkItDownFormats.Extensions) picker.FileTypeFilter.Add(ext);
             var pickedFile = await picker.PickSingleFileAsync();
             if (pickedFile == null) return;
-            if (!await ConfirmDiscardChangesIfNeeded()) return;
+            if (!await MakeRoomForDocument()) return;
 
             var python = await EnsureMarkItDownAsync();
             if (python == null) return;
@@ -254,7 +254,7 @@ namespace Typedown.WinUI
             {
                 Log($"MarkItDown: importing {pickedFile.Path}");
                 using var worker = await MarkItDownWorker.StartAsync(python.Executable);
-                var result = await worker.ConvertAsync(pickedFile.Path, ConvertFileTimeoutMs);
+                var result = await worker.ConvertAsync(pickedFile.Path, ConvertFileTimeoutMs, settings.ConvertEmailRedact);
                 if (!result.Ok || string.IsNullOrWhiteSpace(result.Markdown))
                 {
                     Log($"MarkItDown: import failed {pickedFile.Path}: {result.ErrorKind}: {result.Error}");

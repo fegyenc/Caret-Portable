@@ -124,12 +124,12 @@ namespace Typedown.WinUI.Models
         {
             try
             {
+                if (cursor == null) return;
                 if (pending.Text == null && index > -1)
                 {
                     histories[index].Cursor = cursor;
                     return;
                 }
-                if (cursor == null) return;
                 if (IsPending && pending.Cursor.Focus.Line != cursor.Focus.Line)
                 {
                     pending.Cursor = cursor;

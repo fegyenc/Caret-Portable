@@ -16,7 +16,7 @@
 		<AssemblyTitle>Caret Portable launcher</AssemblyTitle>
 		<Company>Ferenc Works</Company>
 		<Copyright>Copyright © 2026 Ferenc Works. Based on Typedown, copyright © 2022 ZZF.</Copyright>
-		<Version>1.0.1</Version>
+		<Version>1.4.0</Version>
 		<DebugType>none</DebugType>
 		<GenerateSupportedRuntime>false</GenerateSupportedRuntime>
 	</PropertyGroup>

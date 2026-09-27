@@ -14,7 +14,11 @@ namespace Typedown.WinUI.Services
 
         public List<string> Files { get; private set; } = new();
 
-        public FavoritesService()
+        public FavoritesService() => Reload();
+
+        // Every window has its own instance; reading the file again before a change or a list build
+        // keeps one window from saving over what another just added or removed.
+        public void Reload()
         {
             try
             {
@@ -32,6 +36,7 @@ namespace Typedown.WinUI.Services
         // button's checked state without the caller needing its own Contains check first.
         public bool Toggle(string filePath)
         {
+            Reload();
             if (Files.Remove(filePath))
             {
                 Save();
@@ -42,19 +47,34 @@ namespace Typedown.WinUI.Services
             return true;
         }
 
-        public void Remove(string filePath)
+        // The path itself, and everything under it when it's a deleted folder.
+        public void Remove(string path)
         {
-            if (Files.Remove(filePath)) Save();
+            Reload();
+            if (Files.RemoveAll(f => IsSameOrUnder(f, path)) > 0) Save();
         }
 
         // Called after a rename/move so a favorited file doesn't silently fall out of the list —
         // mirrors FileViewModel.RenamePathOnly's role in keeping RecentFiles in sync.
+        // A renamed folder carries the favorites inside it along.
         public void RenamePath(string oldPath, string newPath)
         {
-            var index = Files.FindIndex(f => f.Equals(oldPath, System.StringComparison.OrdinalIgnoreCase));
-            if (index < 0) return;
-            Files[index] = newPath;
-            Save();
+            Reload();
+            var changed = false;
+            for (var i = 0; i < Files.Count; i++)
+            {
+                if (!IsSameOrUnder(Files[i], oldPath)) continue;
+                Files[i] = newPath + Files[i].Substring(oldPath.Length);
+                changed = true;
+            }
+            if (changed) Save();
+        }
+
+        private static bool IsSameOrUnder(string path, string root)
+        {
+            root = root.TrimEnd('\\', '/');
+            return path.Equals(root, System.StringComparison.OrdinalIgnoreCase)
+                || path.StartsWith(root + "\\", System.StringComparison.OrdinalIgnoreCase);
         }
 
         // Called after Delete so a favorited file doesn't linger as a dead entry pointing at a
