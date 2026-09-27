@@ -89,7 +89,7 @@ jobs:
           $v = [version](Get-Item "$env:PUBLISH_DIR\app\Caret.exe").VersionInfo.FileVersion
           Compress-Archive -Path "$env:PUBLISH_DIR" -DestinationPath ("out\Caret-Portable-{0}.{1}.{2}-${{ matrix.platform }}.zip" -f $v.Major, $v.Minor, $v.Build)
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: Caret-Portable-${{ matrix.platform }}
           path: out/Caret-Portable-*-${{ matrix.platform }}.zip
