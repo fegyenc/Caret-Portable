@@ -43,6 +43,23 @@ namespace Typedown.WinUI.Services
             Save();
         }
 
+        // A file or folder renamed in the folder tree: its entries, and those of files under a renamed
+        // folder, keep pointing at it. Reread first, as another window may have changed the list.
+        public void RenamePath(string oldPath, string newPath)
+        {
+            try { Files = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText(historyFile)) ?? Files; } catch { }
+            var root = oldPath.TrimEnd('\\', '/');
+            var changed = false;
+            for (var i = 0; i < Files.Count; i++)
+            {
+                if (!Files[i].Equals(root, System.StringComparison.OrdinalIgnoreCase)
+                    && !Files[i].StartsWith(root + "\\", System.StringComparison.OrdinalIgnoreCase)) continue;
+                Files[i] = newPath + Files[i].Substring(root.Length);
+                changed = true;
+            }
+            if (changed) Save();
+        }
+
         public void Clear()
         {
             Files.Clear();

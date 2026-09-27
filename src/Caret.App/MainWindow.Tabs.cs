@@ -443,6 +443,7 @@ namespace Typedown.WinUI
                     else if (isFolder && path != null && path.StartsWith(folder, StringComparison.OrdinalIgnoreCase))
                         moved = System.IO.Path.Combine(newPath, path.Substring(folder.Length));
                     if (moved == null) continue;
+                    AutoBackup.MoveBackup(path, moved);
                     if (doc.PendingPath != null) doc.PendingPath = moved;
                     else doc.File.RenamePathOnly(moved);
                     window.UpdateTabHeader(doc);

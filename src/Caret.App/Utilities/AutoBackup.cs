@@ -79,6 +79,20 @@ namespace Typedown.WinUI.Utilities
             }
         }
 
+        // A document's backup is keyed by its path, so a rename moves it along; otherwise a crash
+        // after the rename would leave it where recovery never looks.
+        public static void MoveBackup(string oldSourcePath, string newSourcePath)
+        {
+            try
+            {
+                var from = GetBackupFilePath(oldSourcePath);
+                if (File.Exists(from)) File.Move(from, GetBackupFilePath(newSourcePath), overwrite: true);
+            }
+            catch
+            {
+            }
+        }
+
         public static void DeleteBackup(string sourcePath)
         {
             try

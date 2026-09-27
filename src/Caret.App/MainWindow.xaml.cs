@@ -2748,13 +2748,13 @@ namespace Typedown.WinUI
                     File.Move(item.FullPath, newPath);
                 favoritesService.RenamePath(item.FullPath, newPath); // a favorite keeps pointing at it
                 if (FavoritesPanel.Visibility == Visibility.Visible) RefreshFavoritesNavList();
-                var wasOpen = FindDocument(item.FullPath) != null;
+                if (item.Type != ExplorerItem.ExplorerItemType.Folder) AutoBackup.MoveBackup(item.FullPath, newPath);
                 FollowRename(item.FullPath, newPath, item.Type == ExplorerItem.ExplorerItemType.Folder);
-                if (wasOpen)
+                // Recent files follow too, open or not, in every window's list.
+                foreach (var window in openWindows.ToList())
                 {
-                    recentFiles.Remove(item.FullPath);
-                    recentFiles.Record(newPath);
-                    RefreshRecentFilesMenu();
+                    window.recentFiles.RenamePath(item.FullPath, newPath);
+                    window.RefreshRecentFilesMenu();
                 }
                 Log($"Rename: {item.FullPath} -> {newPath}");
             }
