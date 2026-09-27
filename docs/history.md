@@ -1,3 +1,5 @@
+> This is the detailed engineering history, kept as it was written. Paths in it predate the move to `src/`: `Dev/Typedown.WinUI` is now `src/Caret.App` and `Dev/Typedown.Editor` is now `src/Caret.Editor`. For a short list of changes per version, see [CHANGELOG.md](../CHANGELOG.md).
+
 # Caret Portable vs. Caret
 
 Caret Portable was split off from [Caret](https://github.com/fegyenc/Caret) (commit `91f059c`) for PCs where applications can't be installed. What changed:

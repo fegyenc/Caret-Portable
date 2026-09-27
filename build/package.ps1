@@ -1,13 +1,13 @@
 # Builds the portable folder:
 #
 #   Caret-Portable\
-#     Caret.exe     small launcher (Dev\Caret.Launcher) that starts app\Caret.exe
-#     README.md     PORTABLE.md, the user guide
+#     Caret.exe     small launcher (src\Caret.Launcher) that starts app\Caret.exe
+#     README.md     docs\user-guide.md
 #     app\          the WinUI app, self-contained (.NET and the Windows App SDK included)
 #     Data\         created on first run: settings, recent files, WebView2 profile
 #
 # Needs Visual Studio 2022's MSBuild on PATH (a Developer PowerShell) and the editor bundle built
-# first (yarn build in Dev\Typedown.Editor). Used by .github\workflows\portable.yml.
+# first (yarn build in src\Caret.Editor). Used by .github\workflows\portable.yml.
 param(
     [ValidateSet('x64', 'ARM64')]
     [string] $Platform = 'x64',
@@ -20,15 +20,15 @@ $dest = Join-Path $Output 'Caret-Portable'
 $app = Join-Path $dest 'app'
 if (Test-Path $dest) { Remove-Item $dest -Recurse -Force }
 
-msbuild (Join-Path $root 'Dev\Typedown.WinUI\Typedown.WinUI.csproj') -restore -t:Publish -m -v:minimal `
+msbuild (Join-Path $root 'src\Caret.App\Caret.App.csproj') -restore -t:Publish -m -v:minimal `
     -p:Configuration=Release -p:Platform=$Platform "-p:PublishDir=$app\"
 if ($LASTEXITCODE) { throw "Publishing the app failed ($LASTEXITCODE)" }
 
 $launcherOut = Join-Path $Output 'launcher'
-dotnet build (Join-Path $root 'Dev\Caret.Launcher\Caret.Launcher.csproj') -c Release -o $launcherOut -v:minimal
+dotnet build (Join-Path $root 'src\Caret.Launcher\Caret.Launcher.csproj') -c Release -o $launcherOut -v:minimal
 if ($LASTEXITCODE) { throw "Building the launcher failed ($LASTEXITCODE)" }
 Copy-Item (Join-Path $launcherOut 'Caret.exe') $dest
-Copy-Item (Join-Path $root 'PORTABLE.md') (Join-Path $dest 'README.md')
+Copy-Item (Join-Path $root 'docs\user-guide.md') (Join-Path $dest 'README.md')
 
 # The Windows App SDK ships its own UI text (text box menus, accessibility names) for about 90
 # languages, one folder each. Caret itself is English, French and Spanish, so keep those; any other

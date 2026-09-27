@@ -6,7 +6,7 @@ Caret is available in **English**, **French** and **Spanish**. People choose the
 
 | Piece | Where |
 | --- | --- |
-| Caret's own text | `Dev/Typedown.WinUI/Strings/<lang>/AppResources.resw` |
+| Caret's own text | `src/Caret.App/Strings/<lang>/AppResources.resw` |
 | Text inherited from Typedown (mostly used by the editor: placeholders, footnote tool, tooltips) | `Strings/en/CommonResources.resw`, `DialogResources.resw`, `SettingsResources.resw`. French and Spanish versions of the ones the editor still uses live in `Strings/fr` and `Strings/es` `AppResources.resw`. |
 | Loading | `Utilities/Locale.cs` reads the `.resw` files as XML at startup. English is always loaded underneath the chosen language, so a string that isn't translated yet shows in English instead of disappearing. |
 | In XAML | `Text="{u:Loc Key=SaveMenuItem_Text}"` (`Utilities/LocExtension.cs`) |

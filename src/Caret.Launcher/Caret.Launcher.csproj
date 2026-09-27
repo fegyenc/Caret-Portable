@@ -9,10 +9,13 @@
 		<TargetFramework>net48</TargetFramework>
 		<AssemblyName>Caret</AssemblyName>
 		<RootNamespace>Caret.Launcher</RootNamespace>
-		<ApplicationIcon>..\Typedown.WinUI\Assets\logo.ico</ApplicationIcon>
+		<ApplicationIcon>..\Caret.App\Assets\logo.ico</ApplicationIcon>
 		<LangVersion>latest</LangVersion>
 		<Nullable>disable</Nullable>
 		<Product>Caret Portable</Product>
+		<AssemblyTitle>Caret Portable launcher</AssemblyTitle>
+		<Company>Ferenc Works</Company>
+		<Copyright>Copyright © 2026 Ferenc Works. Based on Typedown, copyright © 2022 ZZF.</Copyright>
 		<Version>1.0.1</Version>
 		<DebugType>none</DebugType>
 		<GenerateSupportedRuntime>false</GenerateSupportedRuntime>

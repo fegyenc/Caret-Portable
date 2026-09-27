@@ -198,7 +198,7 @@ namespace Typedown.WinUI
             // so it silently rendered nothing. An absolute file:// URI to the copied-output Assets
             // folder always resolves regardless of packaged/unpackaged.
             TitleBarIconImage.Source = new Microsoft.UI.Xaml.Media.Imaging.BitmapImage(
-                new Uri(Path.Combine(AppContext.BaseDirectory, "Assets", "Square44x44Logo.scale-100.png")));
+                new Uri(Path.Combine(AppContext.BaseDirectory, "Assets", "AppIcon.png")));
         }
 
         // --- Window placement ---
@@ -957,7 +957,7 @@ namespace Typedown.WinUI
         // rendering, and typing afterward inserted characters in the wrong place or dropped them
         // outright (Muya's cursor/selection model was left out of sync with the actual DOM the native
         // paste had produced) — this is what "editing does nothing, then the document loses content"
-        // in CHANGES.md's bug report actually was.
+        // in docs/history.md's bug report actually was.
         // Reads both plain text and HTML from the Windows clipboard (matching Clipboard.paste's
         // { type, text, html } shape) so copying from a real web page/Word/etc. still gets HTML-aware
         // parsing, not just a markdown guess — GetHtmlFormatAsync() returns the raw CF_HTML clipboard

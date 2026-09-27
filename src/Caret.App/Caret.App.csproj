@@ -19,6 +19,9 @@
 		<SelfContained>false</SelfContained>
 		<AssemblyName>Caret</AssemblyName>
 		<Product>Caret Portable</Product>
+		<AssemblyTitle>Caret Portable</AssemblyTitle>
+		<Company>Ferenc Works</Company>
+		<Copyright>Copyright © 2026 Ferenc Works. Based on Typedown, copyright © 2022 ZZF.</Copyright>
 		<Version>1.0.1</Version>
 		<Nullable>disable</Nullable>
 		<Configurations>Debug;Release;Debug_Local</Configurations>
@@ -29,7 +32,7 @@
 	</PropertyGroup>
 
 	<!-- Release is the portable build: the .NET runtime ships inside the folder too, so nothing at all
-	     has to be installed on the PC (see PORTABLE.md and .github/workflows/portable.yml). -->
+	     has to be installed on the PC (see build/package.ps1 and .github/workflows/portable.yml). -->
 	<PropertyGroup Condition="'$(Configuration)' == 'Release'">
 		<SelfContained>true</SelfContained>
 		<DebugType>None</DebugType>
@@ -58,10 +61,13 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<!-- The editor bundle. `yarn build` in Dev\Typedown.Editor writes it here (config-overrides.js);
+		<!-- The editor bundle. `yarn build` in src\Caret.Editor writes it here (config-overrides.js);
 		     it's build output, so it's gitignored (Resources\.gitignore) and has to be built once first. -->
 		<None Update="Resources\Statics\**" CopyToOutputDirectory="PreserveNewest" />
 		<!-- Licence texts ship with the app (MIT requires the notice in copies). -->
+		<!-- The window and title-bar icons, loaded from the output folder at run time (MainWindow). -->
+		<Content Remove="Assets\**" />
+		<Content Include="Assets\logo.ico;Assets\AppIcon.png" CopyToOutputDirectory="PreserveNewest" />
 		<Content Include="..\..\LICENSE" Link="LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
 		<Content Include="..\..\THIRD-PARTY-NOTICES.md" Link="THIRD-PARTY-NOTICES.md" CopyToOutputDirectory="PreserveNewest" />
 	</ItemGroup>

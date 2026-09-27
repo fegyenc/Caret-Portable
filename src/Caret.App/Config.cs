@@ -72,7 +72,7 @@ namespace Typedown.WinUI
         }
 
         // The folder the user sees. The portable zip keeps the app's files in an "app" subfolder,
-        // started by a small Caret.exe launcher one level up (Dev/Caret.Launcher); Data and an
+        // started by a small Caret.exe launcher one level up (src/Caret.Launcher); Data and an
         // optional python folder sit next to that launcher. A plain build output (no launcher)
         // is its own root.
         public static string PortableRoot { get; } = FindPortableRoot();

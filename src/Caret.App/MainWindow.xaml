@@ -125,7 +125,7 @@
              title bar and excludes them from the drag region automatically, no extra passthrough
              config needed. The 140px right margin keeps them clear of the OS-drawn caption buttons
              (minimize/maximize/close), which WinUI 3 reserves space for on its own. The search box and
-             remaining icons (layout toggle) from the mockups aren't here yet — see CHANGES.md. -->
+             remaining icons (layout toggle) from the mockups aren't here yet — see docs/history.md. -->
         <Grid x:Name="AppTitleBar" Grid.Row="0" Height="32">
             <!-- ExtendsContentIntoTitleBar hands the whole bar to app content — the OS draws no icon of
                  its own here (AppWindow.SetIcon only covers the taskbar/Alt-Tab), so the title bar's
@@ -849,7 +849,7 @@
              real reference for what's shown here, not the mockup art — the mockup's literal "Ln 18,
              Col 1" isn't reproducible against Muya (a block-based WYSIWYG editor with no line/column
              concept; that only exists in the CodeMirror source view, which isn't wired up as a real
-             editing mode here — see CHANGES.md's Known Issues). The word/character count toggle is
+             editing mode here — see docs/history.md's Known Issues). The word/character count toggle is
              real, sourced from the same StateChange wordCount payload TocListView's table of contents
              already reads (UpdateWordCount, subscribed alongside UpdateToc). -->
         <Border Grid.Row="3" x:Name="StatusBar" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="0,1,0,0" Padding="12,4">

@@ -1,5 +1,5 @@
 <p align="center">
-  <img alt="Caret" src="./logo.png" width="96" />
+  <img alt="Caret" src="docs/assets/logo.png" width="96" />
 </p>
 
 <h1 align="center">Caret Portable</h1>
@@ -18,11 +18,11 @@ Caret Portable is a run-from-a-folder build of [Caret](https://github.com/fegyen
 - **Can install MarkItDown for you** with `pip install --user` into that Python. No PATH or registry changes, and an organization can turn this off with a policy.
 - **Everything stays in the folder.** Settings, recent files and the editor cache live in `Data\` next to `Caret.exe`.
 
-The user guide that ships inside the zip is **[PORTABLE.md](PORTABLE.md)**.
+The user guide that ships inside the zip is **[docs/user-guide.md](docs/user-guide.md)**. What changed in each version is in **[CHANGELOG.md](CHANGELOG.md)**.
 
 ## Get it
 
-Download `Caret-Portable-x64.zip` (or `-ARM64`) from the latest **Portable build** run under [Actions](../../actions/workflows/portable.yml), or from [Releases](../../releases) for tagged versions. Then unzip it and run `Caret.exe`.
+Download `Caret-Portable-<version>-x64.zip` (or `-ARM64`) from the latest **Portable build** run under [Actions](../../actions/workflows/portable.yml), or from [Releases](../../releases) for tagged versions. Then unzip it and run `Caret.exe`.
 
 Requirements:
 
@@ -96,9 +96,9 @@ Prerequisites:
 - Node.js LTS with Yarn
 
 ```ps
-cd Dev\Typedown.Editor
+cd src\Caret.Editor
 yarn install
-yarn build          # editor bundle -> Dev\Typedown.WinUI\Resources\Statics
+yarn build          # editor bundle -> src\Caret.App\Resources\Statics
 cd ..\..
 ./build/package.ps1 -Platform x64   # from a Developer PowerShell for VS 2022
 ```
@@ -107,18 +107,27 @@ cd ..\..
 
 The [Portable build](.github/workflows/portable.yml) workflow does the same on `windows-latest` for x64 and ARM64. It also starts the x64 build through the launcher from a fresh folder to check that the editor loads and that `Data\` lands next to the launcher, then uploads the zips. Pushing a `v*` tag attaches them to a release.
 
-## Project layout
+## Repository layout
 
-| Path | What it is |
-| --- | --- |
-| `Dev/Typedown.WinUI` | The app: WinUI 3 + WebView2 on .NET 8. |
-| `Dev/Caret.Launcher` | The small `Caret.exe` at the top of the portable folder (.NET Framework 4.8, part of Windows) that starts `app\Caret.exe`. |
-| `build/package.ps1` | Builds the portable folder. |
-| `Dev/Typedown.WinUI/Services/MarkItDown` | Finding Python (`PythonLocator`), running MarkItDown in a worker process (`MarkItDownWorker`), supported formats. |
-| `Dev/Typedown.WinUI/MainWindow.Convert.cs` | The Convert to Markdown page: files, folders, output naming. |
-| `Dev/Typedown.WinUI/MainWindow.MarkItDown.cs` | The Converter panel: detection, choosing python.exe, installing MarkItDown, File → Import. |
-| `Dev/Typedown.WinUI/Strings` | English, French and Spanish ([docs/localization.md](docs/localization.md)). |
-| `Dev/Typedown.Editor` | The editor (React + TypeScript, Muya, CodeMirror). |
+```
+Caret.sln                    Visual Studio solution (the app and the launcher)
+src/
+  Caret.App/                 the app: WinUI 3 + WebView2 on .NET 8
+    Services/MarkItDown/     finding Python, the MarkItDown worker, formats and encodings
+    MainWindow.Convert.cs    the Convert to Markdown page
+    MainWindow.MarkItDown.cs the Converter panel and File → Import
+    Strings/                 English, French and Spanish
+  Caret.Editor/              the Markdown editor (React + TypeScript, Muya, CodeMirror)
+  Caret.Launcher/            the small Caret.exe at the top of the portable folder
+build/package.ps1            builds the portable folder
+docs/
+  user-guide.md              ships in the zip as README.md
+  localization.md            how translations work
+  history.md                 the detailed history from Typedown to Caret to Caret Portable
+.github/workflows/           Windows build, smoke test and release
+```
+
+The C# namespace is still `Typedown.WinUI`, from the project Caret was forked from. It isn't visible to users.
 
 ## Credits
 

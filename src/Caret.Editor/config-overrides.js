@@ -4,7 +4,7 @@ var webpack = require("webpack")
 
 const paths = require('react-scripts/config/paths')
 // Built straight into the Caret app project, which copies it to its output and into the MSIX.
-paths.appBuild = path.join(path.dirname(paths.appBuild),'../Typedown.WinUI/Resources/Statics')
+paths.appBuild = path.join(path.dirname(paths.appBuild),'../Caret.App/Resources/Statics')
 
 module.exports = function override(config, env) {
     const overrideConfig = {

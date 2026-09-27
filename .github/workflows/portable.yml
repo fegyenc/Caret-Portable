@@ -28,7 +28,7 @@ jobs:
           node-version: 20
 
       - name: Build the editor bundle
-        working-directory: Dev/Typedown.Editor
+        working-directory: src/Caret.Editor
         # react-scripts turns every lint warning into an error when CI=true.
         env:
           CI: 'false'
@@ -82,12 +82,14 @@ jobs:
 
       - name: Zip
         shell: pwsh
-        run: Compress-Archive -Path "$env:PUBLISH_DIR" -DestinationPath "out\Caret-Portable-${{ matrix.platform }}.zip"
+        run: |
+          $v = [version](Get-Item "$env:PUBLISH_DIR\app\Caret.exe").VersionInfo.FileVersion
+          Compress-Archive -Path "$env:PUBLISH_DIR" -DestinationPath ("out\Caret-Portable-{0}.{1}.{2}-${{ matrix.platform }}.zip" -f $v.Major, $v.Minor, $v.Build)
 
       - uses: actions/upload-artifact@v4
         with:
           name: Caret-Portable-${{ matrix.platform }}
-          path: out/Caret-Portable-${{ matrix.platform }}.zip
+          path: out/Caret-Portable-*-${{ matrix.platform }}.zip
           if-no-files-found: error
 
   release:
