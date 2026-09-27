@@ -390,6 +390,9 @@ namespace Typedown.WinUI
             closeRequested = true;
             try
             {
+                // An autosave or backup already under way finishes first: once "Don't Save" has
+                // deleted the backups, nothing may write them back.
+                await Task.WhenAny(autoSaveTick);
                 if (!await ConfirmCloseAllDocuments()) return;
                 foreach (var doc in documents) doc.File.CompleteDiscard(); // "Don't Save": backups go too
                 SaveSession();
@@ -452,26 +455,37 @@ namespace Typedown.WinUI
             Closed += (s, e) => timer.Stop();
             timer.Tick += async (s, e) =>
             {
-                // Every open document, not only the one on screen: a tab in the background keeps its
-                // unsaved text too. Tabs restored but never opened have nothing to save yet.
-                foreach (var doc in documents.Where(d => d.PendingPath == null).ToList())
-                {
-                    var f = doc.File;
-                    var blankGuard = f.WouldBlankSavedFile;
-                    if (blankGuard && blankGuardLogged.Add(f)) Log($"AutoSave: skipped blanking '{f.FilePath}'");
-                    if (!blankGuard) blankGuardLogged.Remove(f);
-                    if (settings.AutoSave && f.IsDirty && !string.IsNullOrEmpty(f.FilePath) && !blankGuard)
-                    {
-                        await f.Save();
-                        Log($"AutoSave: {f.FilePath}");
-                    }
-                    else if (await f.BackupTick())
-                    {
-                        Log($"AutoBackup: wrote recovery backup for '{f.BackupKey}'");
-                    }
-                }
+                // No tick while the window is closing (RequestClose waits for one already running),
+                // and never two at once.
+                if (closeRequested || !autoSaveTick.IsCompleted) return;
+                autoSaveTick = AutoSaveTick(blankGuardLogged);
+                await autoSaveTick;
             };
             timer.Start();
+        }
+
+        private Task autoSaveTick = Task.CompletedTask;
+
+        private async Task AutoSaveTick(HashSet<FileViewModel> blankGuardLogged)
+        {
+            // Every open document, not only the one on screen: a tab in the background keeps its
+            // unsaved text too. Tabs restored but never opened have nothing to save yet.
+            foreach (var doc in documents.Where(d => d.PendingPath == null).ToList())
+            {
+                var f = doc.File;
+                var blankGuard = f.WouldBlankSavedFile;
+                if (blankGuard && blankGuardLogged.Add(f)) Log($"AutoSave: skipped blanking '{f.FilePath}'");
+                if (!blankGuard) blankGuardLogged.Remove(f);
+                if (settings.AutoSave && f.IsDirty && !string.IsNullOrEmpty(f.FilePath) && !blankGuard)
+                {
+                    await f.Save();
+                    Log($"AutoSave: {f.FilePath}");
+                }
+                else if (await f.BackupTick())
+                {
+                    Log($"AutoBackup: wrote recovery backup for '{f.BackupKey}'");
+                }
+            }
         }
 
         // --- AutoBackup recovery prompt ---
@@ -1391,6 +1405,15 @@ namespace Typedown.WinUI
                 case "Templates": RefreshTemplatesNavList(); break;
                 case "Trash": RefreshTrashNavList(); break;
             }
+        }
+
+        // After a rename: the recent-files menu, and whichever lists of files are on screen.
+        private void RefreshFileLists()
+        {
+            RefreshRecentFilesMenu();
+            if (RecentNavListView.Visibility == Visibility.Visible) RefreshRecentNavList();
+            if (FavoritesPanel.Visibility == Visibility.Visible) RefreshFavoritesNavList();
+            if (startPageShown) RefreshStartPageList();
         }
 
         private void RefreshRecentNavList() =>
@@ -2747,14 +2770,13 @@ namespace Typedown.WinUI
                 else
                     File.Move(item.FullPath, newPath);
                 favoritesService.RenamePath(item.FullPath, newPath); // a favorite keeps pointing at it
-                if (FavoritesPanel.Visibility == Visibility.Visible) RefreshFavoritesNavList();
                 if (item.Type != ExplorerItem.ExplorerItemType.Folder) AutoBackup.MoveBackup(item.FullPath, newPath);
                 FollowRename(item.FullPath, newPath, item.Type == ExplorerItem.ExplorerItemType.Folder);
                 // Recent files follow too, open or not, in every window's list.
                 foreach (var window in openWindows.ToList())
                 {
                     window.recentFiles.RenamePath(item.FullPath, newPath);
-                    window.RefreshRecentFilesMenu();
+                    window.RefreshFileLists();
                 }
                 Log($"Rename: {item.FullPath} -> {newPath}");
             }

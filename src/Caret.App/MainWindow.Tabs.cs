@@ -561,6 +561,8 @@ namespace Typedown.WinUI
             {
                 await WaitForEditorQuiet();
                 await FlushEditor();
+                // A second Move (or a close) may have taken it while we waited: move it only once.
+                if (!documents.Contains(doc)) return;
             }
             var transfer = new DocumentTransfer(doc.Path, doc.PendingPath == null && doc.IsDirty ? doc.File.Markdown : null, doc.File.UntitledKey);
             var window = new MainWindow(transfer);
