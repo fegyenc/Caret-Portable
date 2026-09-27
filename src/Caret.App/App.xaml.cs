@@ -4,7 +4,7 @@ namespace Typedown.WinUI
 {
     public partial class App : Application
     {
-        private Window? window;
+        private Window window;
 
         public App()
         {

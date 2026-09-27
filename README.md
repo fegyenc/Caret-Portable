@@ -100,7 +100,7 @@ cd src\Caret.Editor
 yarn install
 yarn build          # editor bundle -> src\Caret.App\Resources\Statics
 cd ..\..
-./build/package.ps1 -Platform x64   # from a Developer PowerShell for VS 2022
+./build/package.ps1 -Platform x64   # finds MSBuild itself (vswhere)
 ```
 
 `out\Caret-Portable` is the portable folder: the `Caret.exe` launcher, `README.md` and `app\` (the self-contained app, trimmed to the English, French and Spanish Windows App SDK resources). For everyday development, open `Caret.sln` and run `Debug_Local` (x64).

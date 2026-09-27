@@ -6,8 +6,9 @@
 #     app\          the WinUI app, self-contained (.NET and the Windows App SDK included)
 #     Data\         created on first run: settings, recent files, WebView2 profile
 #
-# Needs Visual Studio 2022's MSBuild on PATH (a Developer PowerShell) and the editor bundle built
-# first (yarn build in src\Caret.Editor). Used by .github\workflows\portable.yml.
+# Needs Visual Studio 2022 (or its Build Tools) with the .NET desktop workload, and the editor bundle
+# built first (yarn build in src\Caret.Editor). MSBuild is found with vswhere, so a normal
+# PowerShell works. Used by .github\workflows\portable.yml.
 param(
     [ValidateSet('x64', 'ARM64')]
     [string] $Platform = 'x64',
@@ -20,7 +21,16 @@ $dest = Join-Path $Output 'Caret-Portable'
 $app = Join-Path $dest 'app'
 if (Test-Path $dest) { Remove-Item $dest -Recurse -Force }
 
-msbuild (Join-Path $root 'src\Caret.App\Caret.App.csproj') -restore -t:Publish -m -v:minimal `
+$msbuild = (Get-Command msbuild -ErrorAction SilentlyContinue).Source
+if (-not $msbuild) {
+    $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+    if (Test-Path $vswhere) {
+        $msbuild = & $vswhere -latest -products * -requires Microsoft.Component.MSBuild -find 'MSBuild\**\Bin\MSBuild.exe' | Select-Object -First 1
+    }
+}
+if (-not $msbuild) { throw 'MSBuild not found. Install Visual Studio 2022 or its Build Tools with the .NET desktop workload.' }
+
+& $msbuild (Join-Path $root 'src\Caret.App\Caret.App.csproj') -restore -t:Publish -m -v:minimal `
     -p:Configuration=Release -p:Platform=$Platform "-p:PublishDir=$app\"
 if ($LASTEXITCODE) { throw "Publishing the app failed ($LASTEXITCODE)" }
 

@@ -32,7 +32,9 @@ namespace Typedown.WinUI.Models
     {
         public enum ExplorerItemType { None, Folder, File }
 
+#pragma warning disable CS0067 // raised by PropertyChanged.Fody
         public event PropertyChangedEventHandler PropertyChanged;
+#pragma warning restore CS0067
 
         public string Name { get; private set; } = "";
 
