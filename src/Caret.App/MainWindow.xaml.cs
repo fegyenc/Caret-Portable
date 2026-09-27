@@ -447,6 +447,9 @@ namespace Typedown.WinUI
         {
             var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
             var blankGuardLogged = new HashSet<FileViewModel>();
+            // A closed window's documents must not be saved or backed up again (after "Don't Save",
+            // that would write the discarded text back).
+            Closed += (s, e) => timer.Stop();
             timer.Tick += async (s, e) =>
             {
                 // Every open document, not only the one on screen: a tab in the background keeps its
@@ -2745,13 +2748,13 @@ namespace Typedown.WinUI
                     File.Move(item.FullPath, newPath);
                 favoritesService.RenamePath(item.FullPath, newPath); // a favorite keeps pointing at it
                 if (FavoritesPanel.Visibility == Visibility.Visible) RefreshFavoritesNavList();
-                if (item.FullPath == file.FilePath)
+                var wasOpen = FindDocument(item.FullPath) != null;
+                FollowRename(item.FullPath, newPath, item.Type == ExplorerItem.ExplorerItemType.Folder);
+                if (wasOpen)
                 {
-                    file.RenamePathOnly(newPath);
                     recentFiles.Remove(item.FullPath);
                     recentFiles.Record(newPath);
                     RefreshRecentFilesMenu();
-                    UpdateTitle();
                 }
                 Log($"Rename: {item.FullPath} -> {newPath}");
             }

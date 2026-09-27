@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Numerics;
 using System.Security.Cryptography;
 using System.Text;
@@ -35,11 +36,17 @@ namespace Typedown.WinUI.Utilities
 
         // Backups of untitled documents: left behind by a crash, or by a window that closed without
         // its prompt. Offered back at startup (MainWindow.RecoverUntitledBackups).
+        private static readonly System.Text.RegularExpressions.Regex UntitledSlot = new(@"^[0-9a-z]{1,6}_untitled(-[0-9a-f]{8})?$");
+
         public static string[] UntitledBackups()
         {
             try
             {
-                return Directory.Exists(BackupFolder) ? Directory.GetFiles(BackupFolder, "*_untitled*") : Array.Empty<string>();
+                // Only real untitled slots ("<hash>_untitled", "<hash>_untitled-3f9a1c0e"), not the backup
+                // of a saved file that happens to be called "Untitled.md".
+                return Directory.Exists(BackupFolder)
+                    ? Directory.GetFiles(BackupFolder, "*_untitled*").Where(f => UntitledSlot.IsMatch(Path.GetFileName(f))).ToArray()
+                    : Array.Empty<string>();
             }
             catch
             {

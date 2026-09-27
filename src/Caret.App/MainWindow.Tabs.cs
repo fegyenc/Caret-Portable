@@ -427,6 +427,30 @@ namespace Typedown.WinUI
             return true;
         }
 
+        // A file or folder renamed in the folder tree: every open document at or under it, in every
+        // window and restored-but-unopened tabs too, follows it; otherwise the next save would write
+        // to the old path (a duplicate) and a restored tab would open blank.
+        private static void FollowRename(string oldPath, string newPath, bool isFolder)
+        {
+            var folder = oldPath.TrimEnd('\\', '/') + System.IO.Path.DirectorySeparatorChar;
+            foreach (var window in openWindows.ToList())
+            {
+                foreach (var doc in window.documents.ToList())
+                {
+                    var path = doc.Path;
+                    string moved = null;
+                    if (string.Equals(path, oldPath, StringComparison.OrdinalIgnoreCase)) moved = newPath;
+                    else if (isFolder && path != null && path.StartsWith(folder, StringComparison.OrdinalIgnoreCase))
+                        moved = System.IO.Path.Combine(newPath, path.Substring(folder.Length));
+                    if (moved == null) continue;
+                    if (doc.PendingPath != null) doc.PendingPath = moved;
+                    else doc.File.RenamePathOnly(moved);
+                    window.UpdateTabHeader(doc);
+                    if (doc == window.activeDoc) window.UpdateTitle();
+                }
+            }
+        }
+
         private DocumentTab FindDocument(string path) =>
             string.IsNullOrEmpty(path) ? null : documents.FirstOrDefault(d => string.Equals(d.Path, path, StringComparison.OrdinalIgnoreCase));
 
@@ -531,6 +555,12 @@ namespace Typedown.WinUI
         {
             if (doc == null || (startPageShown && doc == activeDoc)) return;
             if (doc.PendingPath != null && !File.Exists(doc.PendingPath)) return;
+            // The editor's last keystrokes may still be on their way, as in a tab switch.
+            if (doc == activeDoc && editorReady)
+            {
+                await WaitForEditorQuiet();
+                await FlushEditor();
+            }
             var transfer = new DocumentTransfer(doc.Path, doc.PendingPath == null && doc.IsDirty ? doc.File.Markdown : null, doc.File.UntitledKey);
             var window = new MainWindow(transfer);
             window.Activate();
@@ -693,7 +723,8 @@ namespace Typedown.WinUI
                     // The recovered text is written to its new document's backup slot straight away,
                     // before the orphan is deleted: until the next backup tick it would otherwise exist
                     // only in memory, and a crash in between would lose it for good.
-                    if (TabsEnabled || backup == orphans[0])
+                    // Tabs off: into this window only if it's empty, never over a file it already has.
+                    if (TabsEnabled || (backup == orphans[0] && activeDoc.IsBlank))
                     {
                         if (!await MakeRoomForDocument()) break;
                         file.NewFile();
